@@ -1,97 +1,97 @@
-
 package com.invoiceapp.controller;
 
 import com.invoiceapp.dto.InvoiceForm;
-import com.invoiceapp.dto.InvoiceItemRequest;
 import com.invoiceapp.dto.InvoiceRequest;
+import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.service.ClientService;
+import com.invoiceapp.service.InvoicePdfService;
 import com.invoiceapp.service.InvoiceService;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.invoiceapp.util.InvoiceMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/admin/invoices")
 @RequiredArgsConstructor
 public class InvoiceAdminController {
 
-    private final InvoiceService service;
-    private final ClientService clientService;
+    private final InvoiceService    invoiceService;
+    private final ClientService     clientService;
+    private final InvoicePdfService pdfService;      // for download
 
+    /* ---------- LIST (optionally filtered) ---------- */
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("invoices", service.list(java.util.Optional.empty()));
+    public String list(@RequestParam Optional<InvoiceStatus> status,
+                       Model model) {
+
+        model.addAttribute("invoices", invoiceService.list(status));
+        model.addAttribute("filter",   status.orElse(null));   // keep UI state
         return "admin/invoice-list";
     }
 
-
-
+    /* ---------- SEND / MARK-PAID ---------- */
     @PostMapping("/{id}/send")
     public String send(@PathVariable Long id, RedirectAttributes ra) {
-        service.send(id);
+        invoiceService.send(id);
         ra.addFlashAttribute("success", "Invoice sent!");
         return "redirect:/admin/invoices";
     }
 
     @PostMapping("/{id}/mark-paid")
     public String markPaid(@PathVariable Long id, RedirectAttributes ra) {
-        service.markPaid(id);
+        invoiceService.markPaid(id);
         ra.addFlashAttribute("success", "Invoice marked paid!");
         return "redirect:/admin/invoices";
     }
 
+    /* ---------- NEW FORM ---------- */
     @GetMapping("/new")
-    public String newForm(Model model) {
+    public String newForm(Model model,
+                          @RequestParam Optional<Long> clientId) {
+
+        InvoiceForm form = new InvoiceForm();
+        clientId.ifPresent(form::setClientId);
+        form.setDueDate(LocalDate.now().plusDays(14));      // default NET-14
+
         model.addAttribute("clients", clientService.findAll());
-        model.addAttribute("form", new InvoiceForm());
+        model.addAttribute("form",    form);
         return "admin/invoice-form";
     }
 
+    /* ---------- CREATE (unlimited items) ---------- */
     @PostMapping
-    public String create(@ModelAttribute InvoiceForm form,
+    public String submit(@ModelAttribute("form") InvoiceForm form,
                          RedirectAttributes ra) {
 
-        List<InvoiceItemRequest> items = new ArrayList<>();
+        InvoiceRequest req = InvoiceMapper.fromForm(form);
+        invoiceService.create(req);
 
-        Stream.of(
-                        Tuple.of(form.getDesc1(), form.getQty1(), form.getPrice1()),
-                        Tuple.of(form.getDesc2(), form.getQty2(), form.getPrice2()),
-                        Tuple.of(form.getDesc3(), form.getQty3(), form.getPrice3())
-                )
-                .filter(t -> t._1() != null && !t._1().isBlank())
-                .forEach(t -> items.add(new InvoiceItemRequest(
-                        t._1(),
-                        t._2() == null ? 1 : t._2(),
-                        t._3() == null ? BigDecimal.ZERO : t._3()
-                )));
-
-        InvoiceRequest req = new InvoiceRequest(
-                form.getClientId(),
-                items,
-                LocalDate.now().plusDays(14)
-        );
-
-        service.create(req);
         ra.addFlashAttribute("success", "Draft invoice created!");
         return "redirect:/admin/invoices";
     }
 
-    // tiny tuple helper
-    private record Tuple(String _1, Integer _2, BigDecimal _3) {
-        static Tuple of(String d, Integer q, BigDecimal p) {
-            return new Tuple(d, q, p);
-        }
-    }
+    /* ---------- PDF DOWNLOAD ---------- */
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> download(@PathVariable Long id) {
 
+        byte[] pdf = pdfService.generate(invoiceService.getEntity(id)); // helper that returns Invoice
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename("invoice-" + id + ".pdf")
+                                .build().toString())
+                .body(pdf);
+    }
 }

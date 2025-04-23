@@ -1,23 +1,27 @@
+// src/main/java/com/invoiceapp/dto/InvoiceForm.java
 package com.invoiceapp.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Data;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class InvoiceForm {
+
     private Long clientId;
-    private String desc1;
-    private Integer qty1;
-    private BigDecimal price1;
-    private String desc2;
-    private Integer qty2;
-    private BigDecimal price2;
-    private String desc3;
-    private Integer qty3;
-    private BigDecimal price3;
+
+    // NEW: due date picker binds straight to LocalDate
+    private LocalDate dueDate;
+
+    // NEW: front-end sends many rows => simple container
+    private List<ItemRow> items = new ArrayList<>();
+
+    @Data
+    public static class ItemRow {
+        private String description;
+        private Integer quantity = 1;
+        private BigDecimal unitPrice = BigDecimal.ZERO;
+    }
 }

@@ -106,4 +106,9 @@ public class InvoiceService {
         inv.setStatus(InvoiceStatus.PAID);
         return mapper.toDto(inv);
     }
+    @Transactional
+    public Invoice getEntity(Long id) {
+        return invoiceRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Invoice not found: " + id));
+    }
 }

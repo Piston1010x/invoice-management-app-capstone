@@ -1,13 +1,14 @@
 package com.invoiceapp.util;
 
-import com.invoiceapp.dto.InvoiceItemResponse;
-import com.invoiceapp.dto.InvoiceRequest;
-import com.invoiceapp.dto.InvoiceResponse;
+import com.invoiceapp.dto.*;
 import com.invoiceapp.entity.Client;
 import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.entity.InvoiceItem;
 import com.invoiceapp.entity.InvoiceStatus;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public final class InvoiceMapper {
@@ -48,6 +49,25 @@ public final class InvoiceMapper {
                                 it.getUnitPrice(),
                                 it.getAmount()))
                         .toList()
+        );
+    }
+
+    // InvoiceMapper.java (convert Form → Request → Entity as you do now)
+    public static InvoiceRequest fromForm(InvoiceForm f) {
+
+        List<InvoiceItemRequest> items = f.getItems().stream()
+                .filter(r -> r.getDescription()!=null && !r.getDescription().isBlank())
+                .map(r -> new InvoiceItemRequest(
+                        r.getDescription(),
+                        r.getQuantity()==null?1:r.getQuantity(),
+                        r.getUnitPrice()==null? BigDecimal.ZERO:r.getUnitPrice()
+                ))
+                .toList();
+
+        return new InvoiceRequest(
+                f.getClientId(),
+                items,
+                f.getDueDate()          // NEW
         );
     }
 }

@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +22,16 @@ public class ClientAdminController {
 
     private final ClientService clientService;
 
+    // src/main/java/com/invoiceapp/controller/ClientAdminController.java
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("clients", clientService.findAll());
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "20") int size,
+                       Model model) {
+
+        Page<ClientResponse> pg = clientService.list(page, size);
+
+        model.addAttribute("clients", pg.getContent());
+        model.addAttribute("page",    pg);          // needed by the pagination bar
         return "admin/client-list";
     }
 

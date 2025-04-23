@@ -6,6 +6,10 @@ import com.invoiceapp.repository.ClientRepository;
 import com.invoiceapp.util.ClientMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,19 +21,15 @@ import java.util.List;
 public class ClientService {
 
     private final ClientRepository repo;
+    private final ClientMapper mapper;          // <- mapper is a @Component bean
+
 
     public ClientResponse create(ClientRequest req) {
         Client saved = repo.save(ClientMapper.toEntity(req));
         return ClientMapper.toDto(saved);
     }
 
-    @Transactional(readOnly = true)
-    public List<ClientResponse> findAll() {
-        return repo.findAll()
-                .stream()
-                .map(ClientMapper::toDto)
-                .toList();
-    }
+
 
     @Transactional(readOnly = true)
     public ClientResponse findById(Long id) {
@@ -62,8 +62,22 @@ public class ClientService {
         client.setEmail(form.getEmail());
         client.setPhone(form.getPhone());
     }
+    @Transactional(readOnly = true)
+    public Page<ClientResponse> list(int page, int size) {
 
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
+        return repo.findAll(pageable)
+                .map(ClientMapper::toDto);         // Page.map() keeps paging metadata
+    }
 
+    /* ───────── Simple list for dropdowns, etc. ───────── */
+    @Transactional(readOnly = true)
+    public List<ClientResponse> findAll() {
 
+        return repo.findAll(Sort.by("name"))
+                .stream()
+                .map(ClientMapper::toDto)
+                .toList();
+    }
 }

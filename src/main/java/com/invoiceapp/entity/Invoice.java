@@ -14,6 +14,9 @@ public class Invoice {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false, scale = 2, precision = 15)   // NEW
+    private BigDecimal total = BigDecimal.ZERO;
+
 
     @Column(nullable = true , unique = true, length = 30)
     private String invoiceNumber;
@@ -29,6 +32,8 @@ public class Invoice {
 
     @Column(name = "payment_token", unique = true, length = 60)
     private String paymentToken;                    // set on send()
+    @Column(nullable = false)
+    private boolean archived = false;
 
     @Column(name = "payment_intent_time")
     private LocalDateTime paymentIntentAt;          // set when client clicks link

@@ -5,6 +5,7 @@ import com.invoiceapp.entity.Client;
 import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.entity.InvoiceItem;
 import com.invoiceapp.entity.InvoiceStatus;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

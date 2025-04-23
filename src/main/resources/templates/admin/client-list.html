@@ -66,6 +66,28 @@
     </tr>
     </tbody>
   </table>
+  <nav aria-label="Page nav">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" th:classappend="${page.first}? 'disabled'">
+        <a class="page-link"
+           th:href="@{/admin/clients(page=${page.number-1})}">&laquo;</a>
+      </li>
+
+      <li class="page-item"
+          th:each="i : ${#numbers.sequence(0,page.totalPages-1)}"
+          th:classappend="${i==page.number}? 'active'">
+        <a class="page-link"
+           th:href="@{/admin/clients(page=${i})}"
+           th:text="${i+1}">1</a>
+      </li>
+
+      <li class="page-item" th:classappend="${page.last}? 'disabled'">
+        <a class="page-link"
+           th:href="@{/admin/clients(page=${page.number+1})}">&raquo;</a>
+      </li>
+    </ul>
+  </nav>
+
 </div>
 
 <a href="/admin/clients/new"

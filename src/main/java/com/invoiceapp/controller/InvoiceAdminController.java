@@ -2,12 +2,14 @@ package com.invoiceapp.controller;
 
 import com.invoiceapp.dto.InvoiceForm;
 import com.invoiceapp.dto.InvoiceRequest;
+import com.invoiceapp.dto.InvoiceResponse;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.service.ClientService;
 import com.invoiceapp.service.InvoicePdfService;
 import com.invoiceapp.service.InvoiceService;
 import com.invoiceapp.util.InvoiceMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,14 +32,21 @@ public class InvoiceAdminController {
     private final InvoicePdfService pdfService;      // for download
 
     /* ---------- LIST (optionally filtered) ---------- */
+    // InvoiceAdminController (only list() changes)
     @GetMapping
     public String list(@RequestParam Optional<InvoiceStatus> status,
+                       @RequestParam(defaultValue = "0") int page,
                        Model model) {
 
-        model.addAttribute("invoices", invoiceService.list(status));
-        model.addAttribute("filter",   status.orElse(null));   // keep UI state
+        invoiceService.markOverdue();          // <-- NEW
+
+        Page<InvoiceResponse> invoices = invoiceService.list(status, page, 12);
+        model.addAttribute("invoices", invoices.getContent());
+        model.addAttribute("page",     invoices);        // for pagination bar
+        model.addAttribute("filter",   status.orElse(null));
         return "admin/invoice-list";
     }
+
 
     /* ---------- SEND / MARK-PAID ---------- */
     @PostMapping("/{id}/send")
@@ -94,4 +103,13 @@ public class InvoiceAdminController {
                                 .build().toString())
                 .body(pdf);
     }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes ra) {
+        invoiceService.delete(id);          // you already have delete(id) in the service
+        ra.addFlashAttribute("success", "Invoice deleted!");
+        return "redirect:/admin/invoices";
+}
+
+
 }

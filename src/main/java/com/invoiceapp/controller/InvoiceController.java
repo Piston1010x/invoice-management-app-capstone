@@ -28,10 +28,16 @@ public class InvoiceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
     }
 
+    // src/main/java/com/invoiceapp/controller/InvoiceController.java
     @GetMapping
-    public List<InvoiceResponse> all(@RequestParam Optional<InvoiceStatus> status) {
-        return service.list(status);
+    public List<InvoiceResponse> all(@RequestParam Optional<InvoiceStatus> status,
+                                     @RequestParam(defaultValue = "0")  int page,
+                                     @RequestParam(defaultValue = "20") int size) {
+
+        return service.list(status, page, size)         // <- new signature
+                .getContent();                    // return the page content only
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<InvoiceResponse> get(@PathVariable Long id) {

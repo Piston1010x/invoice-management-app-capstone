@@ -1,56 +1,45 @@
 package com.invoiceapp.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+// src/main/java/com/invoiceapp/security/SecurityConfig.java
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final DbUserDetailsService uds;
 
     @Bean
-    public SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filter(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(cs -> cs.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/public/**",
-                                "/css/**",
-                                "/login",          // <- UNLOCK the login page
-                                "/error")          // (Thymeleaf error page)
-                        .permitAll()
-                        .anyRequest().authenticated())
-                .formLogin(login -> login
+                        .requestMatchers(
+                                "/css/**", "/js/**", "/images/**",
+                                "/login", "/register",
+                                "/public/**", "/error"
+                        ).permitAll() // ⬅ public pages
+                        .anyRequest().authenticated()) // ⬅ everything else: allow if logged in
+                .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/admin/dashboard", true))
-                .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
+                        .defaultSuccessUrl("/admin/dashboard", true)
+                        .permitAll())
+                .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
+                .userDetailsService(uds); // your DbUserDetailsService bean
 
         return http.build();
     }
 
-
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    // ⬇⬇ Temporary user(s)
-    @Bean
-    public UserDetailsService users(PasswordEncoder encoder) {
-        UserDetails admin = User.withUsername("admin")
-                .password(encoder.encode("password"))
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(admin);
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,8 +26,6 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
     @Query("select coalesce(sum(i.total),0) from Invoice i")
     BigDecimal grandTotal();
 
-
-    // InvoiceRepository.java
     @Query("""
            select coalesce(sum(it.unitPrice * it.quantity), 0)
            from InvoiceItem it
@@ -51,7 +50,32 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
     // InvoiceRepository
     Page<Invoice> findByStatusAndArchivedFalse(InvoiceStatus status, Pageable p);
     Page<Invoice> findByArchivedFalse(Pageable p);
+    List<Invoice> findByStatusAndUserAndArchivedFalse(InvoiceStatus status, User user);
+    Page<Invoice> findByStatusAndUserAndArchivedFalse(InvoiceStatus status, User user, Pageable pageable);
+    Page<Invoice> findByUserAndArchivedFalse(User user, Pageable pageable);
+    List<Invoice> findByUser(User user);
+    long countByStatusAndUser(InvoiceStatus status, User user);
+    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE i.status = :status AND i.user = :user AND i.archived = false")
+    BigDecimal sumTotalByStatusAndUser(@Param("status") InvoiceStatus status, @Param("user") User user);
+    long countByUser(User user);
+    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE i.user = :user AND i.archived = false")
+    BigDecimal grandTotalByUser(@Param("user") User user);
+    long countByStatusAndUserAndArchivedFalse(InvoiceStatus status, User user);
+
+    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE i.status = :status AND i.user = :user AND i.archived = false")
+    BigDecimal sumTotalByStatusAndUserAndArchivedFalse(@Param("status") InvoiceStatus status, @Param("user") User user);
 
 
+    @Query("""
+       select i 
+         from Invoice i 
+        where i.archived = false 
+          and i.status   = 'OVERDUE' 
+          and i.dueDate <= :today
+       """)
+    List<Invoice> findSentAndDueOnOrBefore(
+            @Param("status") InvoiceStatus status,
+            @Param("today") LocalDate today);
 }
+
 

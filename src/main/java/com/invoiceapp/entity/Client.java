@@ -16,5 +16,8 @@ public class Client {
     private String name;
     private String email;
     private String phone;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
 }

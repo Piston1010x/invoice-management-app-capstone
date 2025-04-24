@@ -83,6 +83,15 @@
           <button class="btn btn-sm btn-success">Paid</button>
         </form>
 
+        <!-- Revert from PAID → SENT -->
+        <form th:if="${inv.status.name()=='PAID'}"
+              th:action="@{|/admin/invoices/${inv.id}/revert-payment|}"
+              method="post"
+              style="display:inline"
+              onsubmit="return confirm('Mark invoice as UNPAID (revert to SENT)?');">
+          <button class="btn btn-sm btn-warning">Revert</button>
+        </form>
+
         <!-- PDF -->
         <a th:href="@{|/admin/invoices/${inv.id}/pdf|}" target="_blank"
            class="btn btn-sm btn-outline-secondary" title="Download PDF">PDF</a>

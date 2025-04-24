@@ -1,21 +1,25 @@
 package com.invoiceapp.controller;
 
-import com.invoiceapp.dto.InvoiceForm;
-import com.invoiceapp.dto.InvoiceRequest;
-import com.invoiceapp.dto.InvoiceResponse;
+import com.invoiceapp.dto.*;
 import com.invoiceapp.entity.InvoiceStatus;
+import com.invoiceapp.entity.User;
+import com.invoiceapp.repository.UserRepository;
 import com.invoiceapp.service.ClientService;
 import com.invoiceapp.service.InvoicePdfService;
 import com.invoiceapp.service.InvoiceService;
 import com.invoiceapp.util.InvoiceMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -29,26 +33,28 @@ public class InvoiceAdminController {
 
     private final InvoiceService    invoiceService;
     private final ClientService     clientService;
-    private final InvoicePdfService pdfService;      // for download
+    private final InvoicePdfService pdfService;
+    private final UserRepository    userRepository;
 
-    /* ---------- LIST (optionally filtered) ---------- */
-    // InvoiceAdminController (only list() changes)
+
+    /* ─────────────────────────  LIST  ───────────────────────── */
     @GetMapping
     public String list(@RequestParam Optional<InvoiceStatus> status,
                        @RequestParam(defaultValue = "0") int page,
                        Model model) {
 
-        invoiceService.markOverdue();          // <-- NEW
+        invoiceService.markOverdue();                    // auto-flip SENT→OVERDUE
 
-        Page<InvoiceResponse> invoices = invoiceService.list(status, page, 12);
-        model.addAttribute("invoices", invoices.getContent());
-        model.addAttribute("page",     invoices);        // for pagination bar
+        Page<InvoiceResponse> pg = invoiceService.list(status, page, 12);
+
+        model.addAttribute("invoices", pg.getContent());
+        model.addAttribute("page",     pg);              // pagination bar
         model.addAttribute("filter",   status.orElse(null));
         return "admin/invoice-list";
     }
 
 
-    /* ---------- SEND / MARK-PAID ---------- */
+    /* ─────────────────────────  SEND  ───────────────────────── */
     @PostMapping("/{id}/send")
     public String send(@PathVariable Long id, RedirectAttributes ra) {
         invoiceService.send(id);
@@ -56,44 +62,77 @@ public class InvoiceAdminController {
         return "redirect:/admin/invoices";
     }
 
+
+    /* ───────  (GET)  RECORD-PAYMENT FORM  ─────── */
+    @GetMapping("/{id}/record-payment")
+    public String paymentForm(@PathVariable Long id, Model model) {
+
+        InvoiceResponse invoice = invoiceService.get(id);
+
+        RecordPaymentForm form = new RecordPaymentForm();
+        form.setPaymentDate(LocalDate.now());
+        form.setPaymentAmount(invoice.total());          // default = full amount
+
+        model.addAttribute("invoice", invoice);
+        model.addAttribute("form",    form);
+        return "admin/record-payment-form";
+    }
+
+    /* ───────  (POST)  SAVE PAYMENT DETAILS  ─────── */
     @PostMapping("/{id}/mark-paid")
-    public String markPaid(@PathVariable Long id, RedirectAttributes ra) {
-        invoiceService.markPaid(id);
-        ra.addFlashAttribute("success", "Invoice marked paid!");
+    public String submitPayment(@PathVariable Long id,
+                                @Valid @ModelAttribute("form") RecordPaymentForm form,
+                                BindingResult result,
+                                Model model,                              // NEW
+                                RedirectAttributes ra) {
+
+        if (result.hasErrors()) {
+            /* put invoice back so the template can resolve ${invoice.*} */
+            model.addAttribute("invoice", invoiceService.get(id));        // NEW
+            return "admin/record-payment-form";
+        }
+
+        invoiceService.markPaid(id, form);
+        ra.addFlashAttribute("success", "Payment recorded – invoice marked PAID.");
         return "redirect:/admin/invoices";
     }
 
-    /* ---------- NEW FORM ---------- */
+
+
+    /* ────────────────────  CREATE  ──────────────────── */
     @GetMapping("/new")
-    public String newForm(Model model,
-                          @RequestParam Optional<Long> clientId) {
+    public String newForm(Model model, @RequestParam Optional<Long> clientId) {
 
         InvoiceForm form = new InvoiceForm();
         clientId.ifPresent(form::setClientId);
-        form.setDueDate(LocalDate.now().plusDays(14));      // default NET-14
+        form.setDueDate(LocalDate.now().plusDays(14));   // NET-14 default
 
         model.addAttribute("clients", clientService.findAll());
         model.addAttribute("form",    form);
         return "admin/invoice-form";
     }
 
-    /* ---------- CREATE (unlimited items) ---------- */
     @PostMapping
     public String submit(@ModelAttribute("form") InvoiceForm form,
-                         RedirectAttributes ra) {
+                         RedirectAttributes ra,
+                         @AuthenticationPrincipal UserDetails userDetails) {
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         InvoiceRequest req = InvoiceMapper.fromForm(form);
-        invoiceService.create(req);
+        invoiceService.create(req, user);
 
         ra.addFlashAttribute("success", "Draft invoice created!");
         return "redirect:/admin/invoices";
     }
 
-    /* ---------- PDF DOWNLOAD ---------- */
+
+    /* ────────────────────  PDF  ──────────────────── */
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> download(@PathVariable Long id) {
 
-        byte[] pdf = pdfService.generate(invoiceService.getEntity(id)); // helper that returns Invoice
+        byte[] pdf = pdfService.generate(invoiceService.getEntity(id));
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -104,12 +143,20 @@ public class InvoiceAdminController {
                 .body(pdf);
     }
 
+
+    /* ────────────────────  DELETE  ──────────────────── */
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
-        invoiceService.delete(id);          // you already have delete(id) in the service
+        invoiceService.delete(id);        // actually archives
         ra.addFlashAttribute("success", "Invoice deleted!");
         return "redirect:/admin/invoices";
-}
+    }
 
-
+    @PostMapping("/{id}/revert-payment")
+    public String revertPayment(@PathVariable Long id,
+                                RedirectAttributes ra) {
+        invoiceService.revertPaymentStatus(id);
+        ra.addFlashAttribute("success", "Invoice reverted back to SENT");
+        return "redirect:/admin/invoices";
+    }
 }

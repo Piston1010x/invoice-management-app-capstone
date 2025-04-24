@@ -2,15 +2,16 @@ package com.invoiceapp.controller;
 
 import com.invoiceapp.dto.InvoiceRequest;
 import com.invoiceapp.dto.InvoiceResponse;
-import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.entity.InvoiceStatus;
+import com.invoiceapp.entity.User;
+import com.invoiceapp.repository.UserRepository;
 import com.invoiceapp.service.InvoiceService;
-import com.invoiceapp.util.InvoiceMapper;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +23,17 @@ import java.util.Optional;
 public class InvoiceController {
 
     private final InvoiceService service;
+    private final UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<InvoiceResponse> create(@Valid @RequestBody InvoiceRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
+    public ResponseEntity<InvoiceResponse> create(@Valid @RequestBody InvoiceRequest req,
+                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req, user));
     }
+
 
     // src/main/java/com/invoiceapp/controller/InvoiceController.java
     @GetMapping
@@ -49,8 +56,8 @@ public class InvoiceController {
         return service.send(id);
     }
 
-    @PostMapping("/{id}/mark-paid")
+   /** @PostMapping("/{id}/mark-paid")
     public InvoiceResponse markPaid(@PathVariable Long id) {
         return service.markPaid(id);
-    }
+    }**/
 }

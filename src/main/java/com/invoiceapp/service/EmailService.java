@@ -1,3 +1,4 @@
+// src/main/java/com/invoiceapp/service/EmailService.java
 package com.invoiceapp.service;
 
 import jakarta.mail.internet.MimeMessage;
@@ -22,12 +23,16 @@ public class EmailService {
                             String bodyHtml,
                             byte[] pdfBytes,
                             String fileName) {
-
         sendMime(to, subject, bodyHtml, pdfBytes, fileName, "application/pdf");
     }
 
     public void simpleNotify(String to, String subject, String text) {
         sendMime(to, subject, text, null, null, null);
+    }
+
+    /** New: explicitly send an HTML‐only message (no attachment) */
+    public void sendHtml(String to, String subject, String htmlBody) {
+        sendMime(to, subject, htmlBody, null, null, null);
     }
 
     /* ---- private helper ---- */
@@ -44,13 +49,16 @@ public class EmailService {
             h.setFrom(from);
             h.setTo(to);
             h.setSubject(subject);
-            h.setText(body, body.contains("<"));   // html‑flag when body has tags
+            // auto‐detect HTML if body contains a tag:
+            h.setText(body, body != null && body.contains("<"));
 
             if (attachmentBytes != null) {
                 h.addAttachment(
                         attachmentName,
-                        new ByteArrayDataSource(attachmentBytes, attachmentType));
+                        new ByteArrayDataSource(attachmentBytes, attachmentType)
+                );
             }
+
             mailSender.send(msg);
         } catch (Exception e) {
             throw new RuntimeException("mail send failed", e);

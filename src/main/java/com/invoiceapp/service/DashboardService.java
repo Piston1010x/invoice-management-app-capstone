@@ -1,6 +1,8 @@
 package com.invoiceapp.service;
 
+import com.invoiceapp.dto.DashboardStats;
 import com.invoiceapp.entity.InvoiceStatus;
+import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.InvoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,24 +15,28 @@ public class DashboardService {
 
     private final InvoiceRepository repo;
 
-    public DashboardSnapshot snapshot() {
+    public DashboardStats getStatsFor(User user) {
+        long draft   = repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.DRAFT, user);
+        long sent    = repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.SENT, user);
+        long overdue = repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.OVERDUE, user);
+        long paid    = repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.PAID, user);
 
-        long draft   = repo.countByStatus(InvoiceStatus.DRAFT);
-        long sent    = repo.countByStatus(InvoiceStatus.SENT);
-        long overdue = repo.countByStatus(InvoiceStatus.OVERDUE);
-        long paid    = repo.countByStatus(InvoiceStatus.PAID);
+        BigDecimal revenue = repo.sumTotalByStatusAndUserAndArchivedFalse(InvoiceStatus.PAID, user);
+        BigDecimal sentAmount = repo.sumTotalByStatusAndUserAndArchivedFalse(InvoiceStatus.SENT, user);
+        BigDecimal overdueAmt = repo.sumTotalByStatusAndUserAndArchivedFalse(InvoiceStatus.OVERDUE, user);
 
-        BigDecimal revenue     = repo.sumAmountByStatus(InvoiceStatus.PAID);
-        BigDecimal outstanding = repo.sumAmountByStatus(InvoiceStatus.SENT)
-                .add(repo.sumAmountByStatus(InvoiceStatus.OVERDUE));
+        revenue = revenue != null ? revenue : BigDecimal.ZERO;
+        sentAmount = sentAmount != null ? sentAmount : BigDecimal.ZERO;
+        overdueAmt = overdueAmt != null ? overdueAmt : BigDecimal.ZERO;
 
-        return new DashboardSnapshot(
-                repo.count(), draft, sent, overdue, paid,
-                revenue, outstanding, repo.grandAmount());
+        BigDecimal outstanding = sentAmount.add(overdueAmt);
+
+
+        long total = draft + sent + overdue + paid;
+
+        return new DashboardStats(
+                total, draft, sent, overdue, paid,
+                revenue, outstanding
+        );
     }
-
-    public record DashboardSnapshot(
-            long totalInvoices,
-            long draft, long sent, long overdue, long paid,
-            BigDecimal revenue, BigDecimal outstanding, BigDecimal grandTotal) {}
 }

@@ -25,11 +25,8 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role;   // ADMIN, OWNER, etc.
+    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
+    private Role role = Role.USER;
 
-    public void setPassword(String encode) {
-    }
-
+    private boolean enabled = true;
 }

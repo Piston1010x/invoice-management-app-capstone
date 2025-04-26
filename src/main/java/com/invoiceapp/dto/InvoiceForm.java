@@ -1,27 +1,30 @@
-// src/main/java/com/invoiceapp/dto/InvoiceForm.java
 package com.invoiceapp.dto;
 
-import java.math.BigDecimal;
+import com.invoiceapp.entity.Currency;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
-
-@Data
+@Setter
+@Getter
 public class InvoiceForm {
-
     private Long clientId;
-
-    // NEW: due date picker binds straight to LocalDate
+    @NotNull @FutureOrPresent
     private LocalDate dueDate;
+    private Currency currency;
+    private String toName;
+    private String fromName;
+    private String bankName;
+    private String iban;
 
-    // NEW: front-end sends many rows => simple container
-    private List<ItemRow> items = new ArrayList<>();
+    // ← updated:
+    private List<InvoiceItemForm> items = new ArrayList<>();
 
-    @Data
-    public static class ItemRow {
-        private String description;
-        private Integer quantity = 1;
-        private BigDecimal unitPrice = BigDecimal.ZERO;
-    }
+    // getters & setters for all fields, including items
+    public List<InvoiceItemForm> getItems() { return items; }
+    public void setItems(List<InvoiceItemForm> items) { this.items = items; }
 }

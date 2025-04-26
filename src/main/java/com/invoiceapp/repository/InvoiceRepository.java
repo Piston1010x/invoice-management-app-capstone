@@ -76,6 +76,26 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
     List<Invoice> findSentAndDueOnOrBefore(
             @Param("status") InvoiceStatus status,
             @Param("today") LocalDate today);
+    Page<Invoice> findByUserEmail(String username, Pageable pageable);
+    // New: same, but constrained to issueDate between from→to
+    long countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+            InvoiceStatus status, User user, LocalDate from, LocalDate to
+    );
+
+    @Query("""
+      select coalesce(sum(i.total),0) 
+      from Invoice i 
+      where i.status = :status 
+        and i.user = :user 
+        and i.archived = false
+        and i.issueDate between :from and :to
+    """)
+    BigDecimal sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+            @Param("status") InvoiceStatus status,
+            @Param("user")   User user,
+            @Param("from")   LocalDate from,
+            @Param("to")     LocalDate to
+    );
 }
 
 

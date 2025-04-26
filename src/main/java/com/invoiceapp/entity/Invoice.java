@@ -46,6 +46,27 @@ public class Invoice {
     private BigDecimal paymentAmountRecorded;
     @Column(name = "payment_notes")
     private String paymentNotes;
+
+
+    @Column(name = "to_email")
+    private String to;
+    @Column(name = "to_name")
+    private String toName;
+
+    @Column(name = "from_email")
+    private String from;
+    @Column(name = "from_name")
+    private String fromName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency")
+    private Currency currency;
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "iban")
+    private String iban;
+
     /**
      * Before inserting or updating, recalculate the 'total' field
      * so that it's always the sum of item.amount.

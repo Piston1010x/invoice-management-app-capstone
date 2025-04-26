@@ -16,7 +16,4 @@ public class RecordPaymentForm {
 
     private String paymentNotes;
 
-    @NotNull
-    @DecimalMin("0.01")
-    private BigDecimal paymentAmount;
 }

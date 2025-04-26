@@ -22,7 +22,10 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.ui.Model;
+import com.invoiceapp.security.UserProvider;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -31,10 +34,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class InvoiceAdminController {
 
-    private final InvoiceService    invoiceService;
-    private final ClientService     clientService;
+    private final InvoiceService invoiceService;
+    private final ClientService clientService;
     private final InvoicePdfService pdfService;
-    private final UserRepository    userRepository;
+    private final UserRepository userRepository;
+    private final UserProvider userProvider;
 
 
     /* ─────────────────────────  LIST  ───────────────────────── */
@@ -48,8 +52,8 @@ public class InvoiceAdminController {
         Page<InvoiceResponse> pg = invoiceService.list(status, page, 12);
 
         model.addAttribute("invoices", pg.getContent());
-        model.addAttribute("page",     pg);              // pagination bar
-        model.addAttribute("filter",   status.orElse(null));
+        model.addAttribute("page", pg);              // pagination bar
+        model.addAttribute("filter", status.orElse(null));
         return "admin/invoice-list";
     }
 
@@ -66,29 +70,28 @@ public class InvoiceAdminController {
     /* ───────  (GET)  RECORD-PAYMENT FORM  ─────── */
     @GetMapping("/{id}/record-payment")
     public String paymentForm(@PathVariable Long id, Model model) {
-
         InvoiceResponse invoice = invoiceService.get(id);
 
         RecordPaymentForm form = new RecordPaymentForm();
         form.setPaymentDate(LocalDate.now());
-        form.setPaymentAmount(invoice.total());          // default = full amount
-
         model.addAttribute("invoice", invoice);
-        model.addAttribute("form",    form);
+        model.addAttribute("form", form);
         return "admin/record-payment-form";
     }
 
     /* ───────  (POST)  SAVE PAYMENT DETAILS  ─────── */
     @PostMapping("/{id}/mark-paid")
-    public String submitPayment(@PathVariable Long id,
-                                @Valid @ModelAttribute("form") RecordPaymentForm form,
-                                BindingResult result,
-                                Model model,                              // NEW
-                                RedirectAttributes ra) {
+    public String submitPayment(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("form") RecordPaymentForm form,
+            BindingResult result,
+            Model model,                    // ← make sure Model is declared here
+            RedirectAttributes ra) {
 
         if (result.hasErrors()) {
-            /* put invoice back so the template can resolve ${invoice.*} */
-            model.addAttribute("invoice", invoiceService.get(id));        // NEW
+            // repopulate clients or invoice so your form can render correctly
+            model.addAttribute("invoice", invoiceService.get(id));
+            model.addAttribute("clients", clientService.findAll());
             return "admin/record-payment-form";
         }
 
@@ -113,16 +116,18 @@ public class InvoiceAdminController {
     }
 
     @PostMapping
-    public String submit(@ModelAttribute("form") InvoiceForm form,
-                         RedirectAttributes ra,
-                         @AuthenticationPrincipal UserDetails userDetails) {
+    public String submit(
+            @ModelAttribute("form") InvoiceForm form,
+            RedirectAttributes ra,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // map form → request (mapper now handles new fields)
         InvoiceRequest req = InvoiceMapper.fromForm(form);
-        invoiceService.create(req, user);
 
+        invoiceService.create(req);
         ra.addFlashAttribute("success", "Draft invoice created!");
         return "redirect:/admin/invoices";
     }
@@ -159,4 +164,41 @@ public class InvoiceAdminController {
         ra.addFlashAttribute("success", "Invoice reverted back to SENT");
         return "redirect:/admin/invoices";
     }
+
+    // show the form populated for an existing invoice
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        // fetch the InvoiceResponse DTO
+        InvoiceResponse dto = invoiceService.get(id);
+        // map to form backing object
+        InvoiceForm form = InvoiceMapper.toForm(dto);
+        model.addAttribute("form", form);
+        model.addAttribute("clients", clientService.findAll());
+        return "admin/invoice-form";
+    }
+
+    // handle form submission for updates
+    @PostMapping("/{id}/edit")
+    public String update(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("form") InvoiceForm form,
+            BindingResult result,
+            Model model,                                  // ← Model here too
+            RedirectAttributes ra,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        if (result.hasErrors()) {
+            // repopulate data needed by the form view
+            model.addAttribute("clients", clientService.findAll());
+            return "admin/invoice-form";
+        }
+
+        User user = userProvider.getCurrentUser();
+        InvoiceRequest req = InvoiceMapper.fromForm(form);
+        invoiceService.update(id, req);
+
+        ra.addFlashAttribute("success", "Invoice updated!");
+        return "redirect:/admin/invoices";
+    }
+
 }

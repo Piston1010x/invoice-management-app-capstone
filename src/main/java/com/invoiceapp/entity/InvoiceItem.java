@@ -20,6 +20,7 @@ public class InvoiceItem {
 
     private String description;
     private Integer quantity;
+    @Column(nullable = false)
     private BigDecimal unitPrice;
 
     public BigDecimal getAmount() {

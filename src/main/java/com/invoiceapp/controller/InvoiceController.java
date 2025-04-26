@@ -31,7 +31,7 @@ public class InvoiceController {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req, user));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(req));
     }
 
 

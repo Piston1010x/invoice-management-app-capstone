@@ -1,7 +1,8 @@
 package com.invoiceapp.dto;
 
-import java.math.BigDecimal;
+import lombok.Getter;
 
+import java.math.BigDecimal;
 public record InvoiceItemResponse(
         String description,
         int quantity,

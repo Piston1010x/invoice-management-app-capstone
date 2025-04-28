@@ -69,7 +69,7 @@ class InvoiceServiceTest {
         // arrange
         InvoiceRequest dto = new InvoiceRequest(
                 99L,
-                List.<InvoiceItemRequest>of(),
+                List.of(),
                 LocalDate.now().plusDays(30),
                 com.invoiceapp.entity.Currency.USD,
                 "ClientName", "MyName", "Bank", "IBAN123"

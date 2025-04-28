@@ -13,7 +13,7 @@ public class UserService {
 
     public User findByEmail(String email) {
         return repo.findByEmail(email)
-                .map(obj -> (User) obj) // Only if your current findByEmail returns Optional<Object>
+                .map(obj -> obj) // Only if your current findByEmail returns Optional<Object>
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
     }
 }

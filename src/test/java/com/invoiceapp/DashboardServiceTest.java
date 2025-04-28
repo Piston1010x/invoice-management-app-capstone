@@ -8,16 +8,23 @@ import com.invoiceapp.service.DashboardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
+
+    private static final BigDecimal PAID_TOTAL    = new BigDecimal("100.50");
+    private static final BigDecimal SENT_TOTAL    = new BigDecimal("75.25");
+    private static final BigDecimal OVERDUE_TOTAL = new BigDecimal("24.75");
 
     @Mock
     private InvoiceRepository repo;
@@ -35,32 +42,51 @@ class DashboardServiceTest {
 
     @Test
     void getStatsFor_returnsCorrectCountsAndSums() {
-        // stub counts
-        when(repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.DRAFT,   fakeUser)).thenReturn(2L);
-        when(repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.SENT,    fakeUser)).thenReturn(3L);
-        when(repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.OVERDUE, fakeUser)).thenReturn(4L);
-        when(repo.countByStatusAndUserAndArchivedFalse(InvoiceStatus.PAID,    fakeUser)).thenReturn(5L);
 
-        // stub sums (paid, sent, overdue)
-        when(repo.sumTotalByStatusAndUserAndArchivedFalse(InvoiceStatus.PAID,    fakeUser))
-                .thenReturn(new BigDecimal("100.50"));
-        when(repo.sumTotalByStatusAndUserAndArchivedFalse(InvoiceStatus.SENT,    fakeUser))
-                .thenReturn(new BigDecimal(" 75.25"));
-        when(repo.sumTotalByStatusAndUserAndArchivedFalse(InvoiceStatus.OVERDUE, fakeUser))
-                .thenReturn(new BigDecimal(" 24.75"));
+        /* ── stub counts ─────────────────────────────────────────────── */
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.DRAFT),   eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(2L);
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.SENT),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(3L);
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(4L);
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.PAID),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(5L);
 
-        // act
+        /* ── stub totals ─────────────────────────────────────────────── */
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.PAID),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(PAID_TOTAL);
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.SENT),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(SENT_TOTAL);
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
+                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(OVERDUE_TOTAL);
+
+        /* ── act ─────────────────────────────────────────────────────── */
         DashboardStats stats = service.getStatsFor(fakeUser);
 
-        // assert counts
+        /* ── assert counts ───────────────────────────────────────────── */
         assertThat(stats.draft()).isEqualTo(2L);
         assertThat(stats.sent()).isEqualTo(3L);
         assertThat(stats.overdue()).isEqualTo(4L);
         assertThat(stats.paid()).isEqualTo(5L);
-        // total = sum of all statuses
-        assertThat(stats.totalInvoices()).isEqualTo(2L + 3L + 4L + 5L);
-        // revenue = paid-sum, outstanding = sent + overdue
-        assertThat(stats.revenue()).isEqualByComparingTo("100.50");
-        assertThat(stats.outstanding()).isEqualByComparingTo(new BigDecimal(75.25) /*75.25*/.add(new BigDecimal("24.75")));
+        assertThat(stats.totalInvoices()).isEqualTo(14L);
+
+        /* ── assert sums ─────────────────────────────────────────────── */
+        assertThat(stats.revenue()).isEqualByComparingTo(PAID_TOTAL);
+        assertThat(stats.outstanding()).isEqualByComparingTo(SENT_TOTAL.add(OVERDUE_TOTAL));
+
+        /* ── optional: verify interaction count ─────────────────────── */
+        verify(repo, times(4))
+                .countByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
+        verify(repo, times(3))
+                .sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
+        verifyNoMoreInteractions(repo);
     }
 }

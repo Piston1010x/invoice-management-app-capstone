@@ -2,6 +2,7 @@ package com.invoiceapp.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+@SuppressWarnings("JpaDataSourceORMInspection")
 @Data
 @Getter
 @Setter

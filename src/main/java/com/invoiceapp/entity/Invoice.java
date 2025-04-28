@@ -20,7 +20,7 @@ public class Invoice {
     private Long id;
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
-    @Column(nullable = true , unique = true, length = 30)
+    @Column(name = "invoice_number", length = 30)   // ← drop the `unique=true`
     private String invoiceNumber;
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Client client;

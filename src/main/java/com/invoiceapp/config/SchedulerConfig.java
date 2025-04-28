@@ -76,7 +76,7 @@ public class SchedulerConfig {
 
     private void sendReminderToIssuer(Invoice inv) {
         User u = inv.getUser();
-        String who = u.getEmail() != null ? u.getEmail() : u.getEmail();
+        String who = u.getEmail();
         String subject = "Client Overdue Invoice " + inv.getInvoiceNumber();
         String body = String.format(
                 "Hello %s,<br><br>Your client <strong>%s</strong> has an overdue invoice <strong>%s</strong> "

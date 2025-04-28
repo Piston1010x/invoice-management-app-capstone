@@ -1,4 +1,3 @@
-<!-- templates/admin/invoice-list.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
@@ -15,17 +14,12 @@
           rel="stylesheet">
 
   <style>
-    /* Badge colors */
     .badge-DRAFT   { background:#6c757d; color:#fff; }
     .badge-SENT    { background:#0d6efd; color:#fff; }
     .badge-PAID    { background:#198754; color:#fff; }
     .badge-OVERDUE { background:#dc3545; color:#fff; }
-
-    /* Hover highlight */
     .table-hover tbody tr:hover { background-color: #f5f5f5; }
-    /* Mark overdue rows */
     .table-danger > td { background-color: #fff1f0 !important; }
-    /* Keep header visible when scrolling */
     .sticky-header { position: sticky; top: 0; background: #fff; z-index: 2; }
   </style>
 </head>
@@ -36,13 +30,12 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="h3">Invoices</h1>
-  <!-- Header New Invoice button -->
   <a href="/admin/invoices/new" class="btn btn-primary">
     <i class="bi bi-plus-lg"></i> New Invoice
   </a>
 </div>
 
-<!-- Status Filter Only -->
+<!-- Filter Bar -->
 <form class="row g-2 mb-3" method="get" th:action="@{/admin/invoices}">
   <div class="col-sm-3">
     <select class="form-select" name="status">
@@ -66,13 +59,8 @@
   <table class="table table-striped table-hover align-middle">
     <thead class="table-light sticky-header">
     <tr>
-      <th>#</th>
-      <th>Client</th>
-      <th class="text-end">Total</th>
-      <th>Status</th>
-      <th>Issued</th>
-      <th>Due</th>
-      <th class="text-end">Actions</th>
+      <th>#</th><th>Client</th><th class="text-end">Total</th>
+      <th>Status</th><th>Issued</th><th>Due</th><th class="text-end">Actions</th>
     </tr>
     </thead>
     <tbody>
@@ -87,11 +75,12 @@
       <td>
             <span class="badge"
                   th:classappend="'badge-'+${inv.status}"
-                  th:text="${inv.status}">SENT</span>
+                  th:text="${inv.status}">PAID</span>
       </td>
       <td th:text="${inv.issueDate} ?: '-'">-</td>
       <td th:text="${inv.dueDate}">-</td>
       <td class="text-end">
+
         <!-- Send -->
         <form th:if="${inv.status.name()=='DRAFT'}"
               th:action="@{|/admin/invoices/${inv.id}/send|}"
@@ -100,12 +89,14 @@
             <i class="bi bi-envelope-fill"></i>
           </button>
         </form>
-        <!-- Edit -->
+
+        <!-- Edit Draft -->
         <a th:if="${inv.status.name()=='DRAFT'}"
            th:href="@{|/admin/invoices/${inv.id}/edit|}"
            class="btn btn-sm btn-outline-secondary" title="Edit">
           <i class="bi bi-pencil-fill"></i>
         </a>
+
         <!-- Mark Paid -->
         <form th:if="${inv.status.name()=='SENT' or inv.status.name()=='OVERDUE'}"
               th:action="@{|/admin/invoices/${inv.id}/mark-paid|}"
@@ -114,6 +105,7 @@
             <i class="bi bi-check2-circle"></i>
           </button>
         </form>
+
         <!-- Revert Payment -->
         <form th:if="${inv.status.name()=='PAID'}"
               th:action="@{|/admin/invoices/${inv.id}/revert-payment|}"
@@ -123,12 +115,22 @@
             <i class="bi bi-arrow-counterclockwise"></i>
           </button>
         </form>
-        <!-- PDF -->
+
+        <!-- Download Invoice PDF -->
         <a th:href="@{|/admin/invoices/${inv.id}/pdf|}"
            class="btn btn-sm btn-outline-secondary"
            title="Download PDF" target="_blank">
           <i class="bi bi-file-earmark-pdf-fill"></i>
         </a>
+
+        <!-- Download Receipt -->
+        <a th:if="${inv.status.name()=='PAID'}"
+           th:href="@{|/admin/invoices/${inv.id}/receipt|}"
+           class="btn btn-sm btn-outline-primary"
+           title="Download Receipt">
+          <i class="bi bi-receipt"></i>
+        </a>
+
         <!-- Delete -->
         <form th:action="@{|/admin/invoices/${inv.id}/delete|}"
               method="post" style="display:inline"
@@ -136,16 +138,16 @@
           <button type="submit"
                   class="btn btn-sm btn-outline-danger"
                   th:disabled="${inv.status.name()=='PAID'}"
-                  th:title="${inv.status.name()=='PAID'} ? 'Cannot delete paid invoice' : 'Delete'">
+                  th:title="${inv.status.name()=='PAID'} ?
+                                 'Cannot delete paid invoice' : 'Delete'">
             <i class="bi bi-trash-fill"></i>
           </button>
         </form>
+
       </td>
     </tr>
     <tr th:if="${#lists.isEmpty(invoices)}">
-      <td colspan="7" class="text-center text-muted">
-        No invoices found.
-      </td>
+      <td colspan="7" class="text-center text-muted">No invoices found.</td>
     </tr>
     </tbody>
   </table>
@@ -156,12 +158,10 @@
   <ul class="pagination justify-content-center">
     <li class="page-item" th:classappend="${page.first} ? 'disabled'">
       <a class="page-link"
-         th:href="@{/admin/invoices(page=${page.number-1},status=${filter?.name()})}">
-        &laquo;
-      </a>
+         th:href="@{/admin/invoices(page=${page.number-1},status=${filter?.name()})}">&laquo;</a>
     </li>
     <li class="page-item"
-        th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+        th:each="i : ${#numbers.sequence(0,page.totalPages-1)}"
         th:classappend="${i==page.number} ? 'active'">
       <a class="page-link"
          th:href="@{/admin/invoices(page=${i},status=${filter?.name()})}"
@@ -169,9 +169,7 @@
     </li>
     <li class="page-item" th:classappend="${page.last} ? 'disabled'">
       <a class="page-link"
-         th:href="@{/admin/invoices(page=${page.number+1},status=${filter?.name()})}">
-        &raquo;
-      </a>
+         th:href="@{/admin/invoices(page=${page.number+1},status=${filter?.name()})}">&raquo;</a>
     </li>
   </ul>
 </nav>

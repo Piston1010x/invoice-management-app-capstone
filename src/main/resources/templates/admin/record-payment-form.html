@@ -9,7 +9,7 @@
     <style>
         body { padding:2rem; }
         .card { max-width: 600px; margin: 0 auto; }
-        .is-invalid + .invalid-feedback{ display:block; }
+        .is-invalid + .invalid-feedback { display:block; }
     </style>
 </head>
 <body>
@@ -55,6 +55,16 @@
                 </select>
                 <div class="invalid-feedback"
                      th:errors="*{paymentMethod}">Choose a method</div>
+            </div>
+
+            <!-- ───────── Transaction ID (required) ───────── -->
+            <div class="mb-3">
+                <label class="form-label">Transaction ID</label>
+                <input type="text" class="form-control"
+                       th:field="*{transactionId}"
+                       th:classappend="${#fields.hasErrors('transactionId')} ? 'is-invalid'">
+                <div class="invalid-feedback"
+                     th:errors="*{transactionId}">Transaction ID required</div>
             </div>
 
             <div class="mb-3">

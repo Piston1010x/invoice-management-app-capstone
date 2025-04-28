@@ -4,18 +4,31 @@ import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.entity.InvoiceItem;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
+import com.invoiceapp.util.InvoiceMapper;
+import com.itextpdf.text.BaseColor;
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.*;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Service
 public class InvoicePdfService {
+
 
     public byte[] generate(Invoice inv) {
         Document doc = new Document(PageSize.A4);
@@ -68,15 +81,15 @@ public class InvoicePdfService {
             doc.add(Chunk.NEWLINE);
 
             // ─── Items table ────────────────────────────────────
-            PdfPTable table = new PdfPTable(new float[]{3,1,2,2});
+            PdfPTable table = new PdfPTable(new float[]{3, 1, 2, 2});
             table.setWidthPercentage(100);
-            addHeader(table, "Description","Qty","Unit Price","Amount");
+            addHeader(table, "Description", "Qty", "Unit Price", "Amount");
 
             for (InvoiceItem it : inv.getItems()) {
                 table.addCell(it.getDescription());
                 table.addCell(String.valueOf(it.getQuantity()));
-                table.addCell(it.getUnitPrice().setScale(2,RoundingMode.HALF_UP).toString());
-                table.addCell(it.getAmount().setScale(2,RoundingMode.HALF_UP).toString());
+                table.addCell(it.getUnitPrice().setScale(2, RoundingMode.HALF_UP).toString());
+                table.addCell(it.getAmount().setScale(2, RoundingMode.HALF_UP).toString());
             }
 
             PdfPCell totalCell = new PdfPCell(new Phrase("TOTAL", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
@@ -84,7 +97,7 @@ public class InvoicePdfService {
             totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
             table.addCell(totalCell);
 
-            String totalText = inv.getCurrency() + " " + inv.getTotal().setScale(2,RoundingMode.HALF_UP);
+            String totalText = inv.getCurrency() + " " + inv.getTotal().setScale(2, RoundingMode.HALF_UP);
             table.addCell(totalText);
 
             doc.add(table);
@@ -100,6 +113,92 @@ public class InvoicePdfService {
             PdfPCell cell = new PdfPCell(new Phrase(l, FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
             cell.setBackgroundColor(Color.LIGHT_GRAY);
             t.addCell(cell);
+        }
+    }
+
+
+    public byte[] generateReceipt(Invoice inv) {
+        // use a receipt-friendly size & tighter margins
+        Document doc = new Document(PageSize.A6, 20, 20, 20, 20);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            PdfWriter.getInstance(doc, baos);
+            doc.open();
+
+            // ——— Title (centered) —————————————————————————————
+            Font h1 = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Paragraph title = new Paragraph("Payment Receipt", h1);
+            title.setAlignment(Element.ALIGN_CENTER);
+            doc.add(title);
+            doc.add(Chunk.NEWLINE);
+
+            // ——— Info block ————————————————————————————————————
+            Font normal = FontFactory.getFont(FontFactory.HELVETICA, 10);
+            PdfPTable info = new PdfPTable(2);
+            info.setWidthPercentage(100);
+            info.setWidths(new float[]{3, 2});
+            info.getDefaultCell().setBorder(Rectangle.NO_BORDER);
+            info.getDefaultCell().setPadding(2);
+            info.addCell(new Phrase("Invoice #: " + inv.getInvoiceNumber(), normal));
+            info.addCell(new Phrase("Transaction ID: " + inv.getTransactionId(), normal));
+            info.addCell(new Phrase("Date: " + inv.getPaymentDate(), normal));
+            info.addCell(new Phrase("", normal)); // spacer
+            doc.add(info);
+            doc.add(Chunk.NEWLINE);
+
+            // ——— Items table ————————————————————————————————————
+            PdfPTable table = new PdfPTable(new float[]{4,1,2});
+            table.setWidthPercentage(100);
+            table.setSpacingBefore(5f);
+
+            Font hdr = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+            BaseColor gray = new BaseColor(0xEE, 0xEE, 0xEE);
+            Color color = new Color(0xFFFFFF);
+            // header row
+            for (String col : List.of("Description","Qty","Amount")) {
+                PdfPCell cell = new PdfPCell(new Phrase(col, hdr));
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                cell.setBackgroundColor(color);
+                cell.setPadding(4f);
+                table.addCell(cell);
+            }
+
+            // data rows
+            for (var it : inv.getItems()) {
+                PdfPCell desc = new PdfPCell(new Phrase(it.getDescription(), normal));
+                desc.setPadding(4f);
+                table.addCell(desc);
+
+                PdfPCell qty = new PdfPCell(new Phrase(it.getQuantity().toString(), normal));
+                qty.setHorizontalAlignment(Element.ALIGN_CENTER);
+                qty.setPadding(4f);
+                table.addCell(qty);
+
+                PdfPCell amt = new PdfPCell(new Phrase(
+                        it.getAmount().setScale(2, RoundingMode.HALF_UP).toString(), normal));
+                amt.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                amt.setPadding(4f);
+                table.addCell(amt);
+            }
+
+            // total row
+            PdfPCell lbl = new PdfPCell(new Phrase("TOTAL", hdr));
+            lbl.setColspan(2);
+            lbl.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            lbl.setPadding(4f);
+            table.addCell(lbl);
+
+            PdfPCell tot = new PdfPCell(new Phrase(
+                    inv.getTotal().setScale(2, RoundingMode.HALF_UP).toString(), hdr));
+            tot.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            tot.setPadding(4f);
+            table.addCell(tot);
+
+            doc.add(table);
+            doc.close();
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn’t generate receipt PDF", e);
         }
     }
 }

@@ -16,4 +16,6 @@ public class RecordPaymentForm {
 
     private String paymentNotes;
 
+    @NotBlank
+    private String transactionId;
 }

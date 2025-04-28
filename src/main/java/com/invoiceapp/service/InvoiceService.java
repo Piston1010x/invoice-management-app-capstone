@@ -96,6 +96,8 @@ public class InvoiceService {
         inv.setPaymentDate(f.getPaymentDate());
         inv.setPaymentMethod(f.getPaymentMethod());
         inv.setPaymentNotes(f.getPaymentNotes());
+        inv.setTransactionId(f.getTransactionId());       // ← NEW
+
         snapshot(inv);
         return InvoiceMapper.toDto(inv);
     }

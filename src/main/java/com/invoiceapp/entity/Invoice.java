@@ -1,6 +1,7 @@
 package com.invoiceapp.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -66,6 +67,9 @@ public class Invoice {
 
     @Column(name = "iban")
     private String iban;
+
+    @Column(nullable = true)   // allow DB NULL
+    private String transactionId;      // <-- new
 
     /**
      * Before inserting or updating, recalculate the 'total' field

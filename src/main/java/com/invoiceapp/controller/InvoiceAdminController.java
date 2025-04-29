@@ -108,16 +108,19 @@ public class InvoiceAdminController {
     }
 
     @PostMapping
-    public String submit(@ModelAttribute("form") InvoiceForm form,
-                         RedirectAttributes ra,
-                         @AuthenticationPrincipal UserDetails userDetails) {
+    public String submit(@Valid @ModelAttribute("form") InvoiceForm form,   // ← add @Valid
+                         BindingResult result,                              // ← add BindingResult
+                         RedirectAttributes ra) {
 
-        // map form → request
-        InvoiceRequest req = InvoiceMapper.fromForm(form);
-        invoiceService.create(req);
+        if (result.hasErrors()) {                 // ← bounce back to the form
+            return "admin/invoice-form";
+        }
+
+        invoiceService.create(InvoiceMapper.fromForm(form));
         ra.addFlashAttribute("success", "Draft invoice created!");
         return "redirect:/admin/invoices";
     }
+
 
     /* ────────────────────  PDF  ──────────────────── */
     @GetMapping("/{id}/pdf")

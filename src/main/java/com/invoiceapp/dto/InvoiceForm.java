@@ -2,6 +2,7 @@ package com.invoiceapp.dto;
 
 import com.invoiceapp.entity.Currency;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,10 +16,15 @@ public class InvoiceForm {
     private Long clientId;
     @NotNull @FutureOrPresent
     private LocalDate dueDate;
+    @NotNull
     private Currency currency;
+    @NotBlank
     private String toName;
+    @NotBlank
     private String fromName;
+    @NotBlank
     private String bankName;
+    @NotBlank
     private String iban;
 
     // ← updated:

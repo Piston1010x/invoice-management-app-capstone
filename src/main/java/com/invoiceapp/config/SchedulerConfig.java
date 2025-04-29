@@ -38,9 +38,7 @@ public class SchedulerConfig {
     @Transactional
     public void processOverdueInvoices() {
         LocalDate today = LocalDate.now();
-
-        List<Invoice> toProcess =
-                invoiceRepo.findSentAndDueOnOrBefore(InvoiceStatus.SENT, today);
+        List<Invoice> toProcess = invoiceRepo.findSentAndDueOnOrBefore(InvoiceStatus.SENT, today);
 
         if (toProcess.isEmpty()) {
             log.info("Overdue sweep: none to process at {}", today);

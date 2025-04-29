@@ -66,10 +66,8 @@
     <tbody>
     <tr th:each="inv : ${invoices}"
         th:classappend="${inv.status.name()=='OVERDUE'} ? 'table-danger'">
-      <td>
-        <a th:href="@{|/admin/invoices/${inv.id}/edit|}"
-           th:text="${inv.invoiceNumber}">INV-00001</a>
-      </td>
+      <td th:text="${inv.invoiceNumber}">INV-00001</td>
+
       <td th:text="${inv.clientName}">Acme Ltd</td>
       <td class="text-end" th:text="${inv.total}">100.00</td>
       <td>

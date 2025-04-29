@@ -3,6 +3,7 @@ package com.invoiceapp.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.*;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import com.invoiceapp.entity.Currency;
 import java.time.LocalDate;
@@ -12,9 +13,9 @@ public record InvoiceRequest(
         Long clientId,
         @NotNull List<@Valid InvoiceItemRequest> items,
         @FutureOrPresent LocalDate dueDate,
-        Currency currency,
-        String toName,              // new
-        String fromName,            // new
-        String bankName,    // new
-        String iban
+        @NotNull  Currency currency,
+        @NotBlank String toName,
+        @NotBlank String fromName,
+        @NotBlank String bankName,
+        @NotBlank String iban
 ) {}

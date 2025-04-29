@@ -37,16 +37,22 @@
                 <div class="invalid-feedback">Enter a valid e-mail.</div>
             </div>
 
-            <!-- Phone -->
+            <!-- Phone (required) -->
             <div class="mb-3">
-                <label class="form-label">Phone</label>
-                <input th:field="*{phone}" class="form-control"
-                       placeholder="+995 555 123456"
-                       pattern="^$|^\+?\d{7,15}$">
+                <label class="form-label">Phone <span class="text-danger">*</span></label>
+
+                <!--  ▼ note the double backslashes -->
+                <!-- works in every browser -->
+                <input type="tel" th:field="*{phone}" class="form-control"
+                       placeholder="+995555123456"
+                       pattern="^\+?[0-9]{7,15}$" required>
+
+
                 <div class="invalid-feedback">
-                    Use digits only (7-15) – optional.
+                    Phone number is required (7–15 digits, may start with “+”).
                 </div>
             </div>
+
 
             <div class="d-grid">
                 <button type="submit" class="btn btn-success">Save Client</button>

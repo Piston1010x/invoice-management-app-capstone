@@ -1,10 +1,13 @@
 package com.invoiceapp.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Getter
 public class InvoiceMetric {
 
     @Id @GeneratedValue private Long id;

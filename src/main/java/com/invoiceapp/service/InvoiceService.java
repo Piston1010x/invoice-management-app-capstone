@@ -102,21 +102,6 @@ public class InvoiceService {
         return InvoiceMapper.toDto(inv);
     }
 
-    public InvoiceResponse markPaid(Long id,
-                                    RecordPaymentForm f,
-                                    BigDecimal amount) {
-        Invoice inv = getEntity(id);
-        if (!Set.of(InvoiceStatus.SENT, InvoiceStatus.OVERDUE).contains(inv.getStatus())) {
-            throw new IllegalStateException("Only SENT/OVERDUE can be paid");
-        }
-        inv.setStatus(InvoiceStatus.PAID);
-        inv.setPaymentDate(f.getPaymentDate());
-        inv.setPaymentMethod(f.getPaymentMethod());
-        inv.setPaymentAmountRecorded(amount);
-        inv.setPaymentNotes(f.getPaymentNotes());
-        snapshot(inv);
-        return InvoiceMapper.toDto(inv);
-    }
 
     // ─── OVERDUE SWEEP ───────────────────────────────────────────────────
     public int markOverdue() {
@@ -211,6 +196,7 @@ public class InvoiceService {
         inv.setPaymentMethod(null);
         inv.setPaymentAmountRecorded(null);
         inv.setPaymentNotes(null);
+        inv.setTransactionId(null); // <-- Add this line if needed
 
         // persist changes
         invoiceRepo.save(inv);

@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,6 +97,15 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
             @Param("from")   LocalDate from,
             @Param("to")     LocalDate to
     );
+
+    long countByClientIdAndStatusNot(Long clientId, InvoiceStatus status);
+
+    long countByClientIdAndStatusInAndArchivedFalse(
+            Long clientId,
+            Collection<InvoiceStatus> statuses);
+    long countByClientId(Long clientId);
+    void deleteAllByClientId(Long clientId);
+
 }
 
 

@@ -27,6 +27,4 @@ public class InvoiceMetric {
         this.status       = st;
         this.amount       = amt;
     }
-
-    /* getters omitted – not used anywhere yet */
 }

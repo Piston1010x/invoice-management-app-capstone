@@ -93,7 +93,6 @@ public class ClientAdminControllerTest {
 
         verify(clientService).create(any(ClientRequest.class));
     }
-    // Add test for submitNewClient with INVALID data
 
     // --- EDIT/UPDATE Tests ---
     @Test
@@ -128,7 +127,6 @@ public class ClientAdminControllerTest {
                 .andExpect(redirectedUrl("/admin/clients"));
     }
 
-    // Add test for submitUpdateClient with INVALID data
 
     // --- DELETE Test ---
     @Test

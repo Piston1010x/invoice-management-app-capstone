@@ -29,14 +29,13 @@ public class AdminHomeController {
     private final UserService userService;
     private final InvoiceService invoiceService;
 
-    // Redirect /admin to /admin/dashboard
+    // Redirect /admin → /admin/dashboard
     @GetMapping
     public String rootRedirect() {
         return "redirect:/admin/dashboard";
     }
 
-
-    //Main dashboard
+    // Main dashboard
     @GetMapping("/dashboard")
     public String dashboard(
             Model model,
@@ -48,25 +47,23 @@ public class AdminHomeController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             Optional<LocalDate> toDate
     ) {
-        // Determine date range (default: first of month → today)
+        // Determine date range (default: 1st of month → today)
         LocalDate start = fromDate.orElse(LocalDate.now().withDayOfMonth(1));
         LocalDate end   = toDate.orElse(LocalDate.now());
 
-        // Load user
+        // Load current user
         User user = userService.findByEmail(userDetails.getUsername());
 
-        // Fetch stats for the given range
+        // Fetch stats & recent invoices
         DashboardStats stats = dashboardService.getStatsFor(user, start, end);
-
-        // Fetch recent invoices (always last 5)
         List<InvoiceResponse> recentInvoices =
                 invoiceService.getRecentInvoices(user.getEmail(), 5);
 
         // Populate model
-        model.addAttribute("stats", stats);
-        model.addAttribute("recentInvoices", recentInvoices);
-        model.addAttribute("from", start);
-        model.addAttribute("to", end);
+        model.addAttribute("stats",           stats);
+        model.addAttribute("recentInvoices",  recentInvoices);
+        model.addAttribute("from",            start);
+        model.addAttribute("to",              end);
 
         return "admin/dashboard";
     }

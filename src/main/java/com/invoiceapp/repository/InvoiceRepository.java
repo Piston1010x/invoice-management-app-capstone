@@ -1,5 +1,6 @@
 package com.invoiceapp.repository;
 
+import com.invoiceapp.entity.Currency;
 import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
@@ -105,7 +106,26 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
             Collection<InvoiceStatus> statuses);
     long countByClientId(Long clientId);
     void deleteAllByClientId(Long clientId);
+    List<Invoice> findByStatusAndUserAndArchivedFalseAndIssueDateBetween(InvoiceStatus invoiceStatus, User user, LocalDate from, LocalDate to);
+
+    @Query("""
+      select sum(i.total)
+      from Invoice i
+      where i.status      = :status
+        and i.user        = :user
+        and i.currency    = :currency
+        and i.archived    = false
+        and i.issueDate  between :from and :to
+    """)
+    BigDecimal sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(
+            @Param("status")   InvoiceStatus status,
+            @Param("user")     User        user,
+            @Param("currency") Currency    currency,
+            @Param("from")     LocalDate   from,
+            @Param("to")       LocalDate   to);
+
 
 }
+
 
 

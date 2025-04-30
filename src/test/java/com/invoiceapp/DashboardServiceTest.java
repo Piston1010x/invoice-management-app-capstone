@@ -26,6 +26,9 @@ class DashboardServiceTest {
     private static final BigDecimal SENT_TOTAL    = new BigDecimal("75.25");
     private static final BigDecimal OVERDUE_TOTAL = new BigDecimal("24.75");
 
+    private static final LocalDate FROM = LocalDate.of(2024, 1, 1);
+    private static final LocalDate TO   = LocalDate.of(2024, 12, 31);
+
     @Mock
     private InvoiceRepository repo;
 
@@ -43,50 +46,35 @@ class DashboardServiceTest {
     @Test
     void getStatsFor_returnsCorrectCountsAndSums() {
 
-        /* ── stub counts ─────────────────────────────────────────────── */
         when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.DRAFT),   eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(2L);
+                eq(InvoiceStatus.DRAFT), eq(fakeUser), any(), any())).thenReturn(2L);
         when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.SENT),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(3L);
+                eq(InvoiceStatus.SENT), eq(fakeUser), any(), any())).thenReturn(3L);
         when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(4L);
+                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(), any())).thenReturn(4L);
         when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.PAID),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(5L);
+                eq(InvoiceStatus.PAID), eq(fakeUser), any(), any())).thenReturn(5L);
 
-        /* ── stub totals ─────────────────────────────────────────────── */
         when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.PAID),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(PAID_TOTAL);
+                eq(InvoiceStatus.PAID), eq(fakeUser), any(), any())).thenReturn(PAID_TOTAL);
         when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.SENT),    eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(SENT_TOTAL);
+                eq(InvoiceStatus.SENT), eq(fakeUser), any(), any())).thenReturn(SENT_TOTAL);
         when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(LocalDate.class), any(LocalDate.class)))
-                .thenReturn(OVERDUE_TOTAL);
+                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(), any())).thenReturn(OVERDUE_TOTAL);
 
-        /* ── act ─────────────────────────────────────────────────────── */
-        DashboardStats stats = service.getStatsFor(fakeUser);
+        DashboardStats stats = service.getStatsFor(fakeUser, FROM, TO);
 
-        /* ── assert counts ───────────────────────────────────────────── */
-        assertThat(stats.draft()).isEqualTo(2L);
-        assertThat(stats.sent()).isEqualTo(3L);
-        assertThat(stats.overdue()).isEqualTo(4L);
-        assertThat(stats.paid()).isEqualTo(5L);
-        assertThat(stats.totalInvoices()).isEqualTo(14L);
+        assertThat(stats.getDraft()).isEqualTo(2L);
+        assertThat(stats.getSent()).isEqualTo(3L);
+        assertThat(stats.getOverdue()).isEqualTo(4L);
+        assertThat(stats.getPaid()).isEqualTo(5L);
+        assertThat(stats.getTotalInvoices()).isEqualTo(14L);
 
-        /* ── assert sums ─────────────────────────────────────────────── */
-        assertThat(stats.revenue()).isEqualByComparingTo(PAID_TOTAL);
-        assertThat(stats.outstanding()).isEqualByComparingTo(SENT_TOTAL.add(OVERDUE_TOTAL));
+        assertThat(stats.getRevenue()).isEqualByComparingTo(PAID_TOTAL);
+        assertThat(stats.getOutstanding()).isEqualByComparingTo(SENT_TOTAL.add(OVERDUE_TOTAL));
 
-        /* ── optional: verify interaction count ─────────────────────── */
-        verify(repo, times(4))
-                .countByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
-        verify(repo, times(3))
-                .sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
-        verifyNoMoreInteractions(repo);
+        verify(repo, times(4)).countByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
+        verify(repo, times(3)).sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
+
     }
 }

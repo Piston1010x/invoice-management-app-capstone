@@ -86,6 +86,7 @@ public final class InvoiceMapper {
     //Converts InvoiceResponse form to UI form
     public static InvoiceForm toForm(InvoiceResponse dto) {
         InvoiceForm f = new InvoiceForm();
+        f.setId(dto.id());               // ← copy the PK into the form
         f.setClientId(dto.clientId());
         f.setDueDate(dto.dueDate());
         f.setCurrency(dto.currency());

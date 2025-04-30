@@ -1,20 +1,36 @@
-<!-- templates/admin/invoice-form.html -->
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>New Invoice</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    <title th:text="${form.id} == null ? 'New Invoice' : 'Edit Invoice'">Invoice</title>
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
     <style>
         #itemTableWrapper { max-height: 55vh; overflow-y: auto; }
     </style>
 </head>
 <body class="p-4">
-<div th:replace="fragments/navbar :: body"></div>
-<h1 class="mb-4">New Invoice</h1>
 
-<form th:object="${form}" th:action="@{/admin/invoices}" method="post">
+<!-- Navbar -->
+<div th:replace="fragments/navbar :: body"></div>
+
+<!-- Heading -->
+<h1 class="mb-4"
+    th:text="${form.id} == null ? 'New Invoice' : 'Edit Invoice'">
+    Invoice
+</h1>
+
+<!-- form: create if no id, else edit -->
+<form th:object="${form}"
+      th:action="${form.id} == null
+                      ? @{/admin/invoices}
+                      : @{/admin/invoices/{id}/edit(id=${form.id})}"
+      method="post">
+
+    <!-- hidden id -->
+    <input type="hidden" th:field="*{id}" />
+
     <!-- Client / Due date / Currency -->
     <div class="row mb-3">
         <div class="col-md-6">
@@ -23,31 +39,40 @@
                 <option value="" disabled>Select client</option>
                 <option th:each="c : ${clients}"
                         th:value="${c.id}"
-                        th:text="${c.name}"></option>
+                        th:text="${c.name}">
+                </option>
             </select>
-            <div class="text-danger" th:if="${#fields.hasErrors('clientId')}"
-                 th:errors="*{clientId}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('clientId')}"
+                 th:errors="*{clientId}">
+            </div>
         </div>
 
         <div class="col-md-3">
             <label class="form-label">Due date</label>
-            <input type="date" class="form-control"
+            <input type="date"
+                   class="form-control"
                    th:field="*{dueDate}"
                    th:attr="min=${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}"
                    required/>
-            <div class="text-danger" th:if="${#fields.hasErrors('dueDate')}"
-                 th:errors="*{dueDate}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('dueDate')}"
+                 th:errors="*{dueDate}">
+            </div>
         </div>
-
 
         <div class="col-md-3">
             <label class="form-label">Currency</label>
             <select class="form-select" th:field="*{currency}" required>
                 <option th:each="c : ${T(com.invoiceapp.entity.Currency).values()}"
-                        th:value="${c}" th:text="${c}"></option>
+                        th:value="${c}"
+                        th:text="${c}">
+                </option>
             </select>
-            <div class="text-danger" th:if="${#fields.hasErrors('currency')}"
-                 th:errors="*{currency}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('currency')}"
+                 th:errors="*{currency}">
+            </div>
         </div>
     </div>
 
@@ -57,8 +82,10 @@
             <label class="form-label">To (Client Name)</label>
             <input type="text" class="form-control"
                    th:field="*{toName}" required/>
-            <div class="text-danger" th:if="${#fields.hasErrors('toName')}"
-                 th:errors="*{toName}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('toName')}"
+                 th:errors="*{toName}">
+            </div>
         </div>
     </div>
 
@@ -67,8 +94,10 @@
             <label class="form-label">From (Your Name)</label>
             <input type="text" class="form-control"
                    th:field="*{fromName}" required/>
-            <div class="text-danger" th:if="${#fields.hasErrors('fromName')}"
-                 th:errors="*{fromName}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('fromName')}"
+                 th:errors="*{fromName}">
+            </div>
         </div>
     </div>
 
@@ -78,16 +107,19 @@
             <label class="form-label">Bank Name</label>
             <input type="text" class="form-control"
                    th:field="*{bankName}" required/>
-            <div class="text-danger" th:if="${#fields.hasErrors('bankName')}"
-                 th:errors="*{bankName}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('bankName')}"
+                 th:errors="*{bankName}">
+            </div>
         </div>
-
         <div class="col-md-6">
             <label class="form-label">IBAN</label>
             <input type="text" class="form-control"
                    th:field="*{iban}" required/>
-            <div class="text-danger" th:if="${#fields.hasErrors('iban')}"
-                 th:errors="*{iban}"></div>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('iban')}"
+                 th:errors="*{iban}">
+            </div>
         </div>
     </div>
 
@@ -103,18 +135,21 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="row,idx : *{items}">
+            <tr th:each="row, idx : *{items}">
                 <td>
                     <input type="text" class="form-control"
-                           th:field="*{items[__${idx.index}__].description}" required/>
+                           th:field="*{items[__${idx.index}__].description}"
+                           required/>
                 </td>
                 <td>
                     <input type="number" min="1" class="form-control"
-                           th:field="*{items[__${idx.index}__].quantity}" required/>
+                           th:field="*{items[__${idx.index}__].quantity}"
+                           required/>
                 </td>
                 <td>
                     <input type="number" step="0.01" class="form-control"
-                           th:field="*{items[__${idx.index}__].unitPrice}" required/>
+                           th:field="*{items[__${idx.index}__].unitPrice}"
+                           required/>
                 </td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-danger"
@@ -129,7 +164,11 @@
             onclick="addRow()">Add item</button>
     <br>
 
-    <button type="submit" class="btn btn-primary">Save Draft</button>
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary"
+            th:text="${form.id} == null ? 'Save Draft' : 'Update Invoice'">
+        Save
+    </button>
     <a href="/admin/invoices" class="btn btn-secondary">Cancel</a>
 </form>
 
@@ -138,10 +177,10 @@
         return `
         <tr>
           <td><input name="items[${idx}].description" class="form-control" required></td>
-          <td><input name="items[${idx}].quantity" type="number" min="1"
-                     class="form-control" value="1" required></td>
-          <td><input name="items[${idx}].unitPrice" type="number" step="0.01"
-                     class="form-control" value="0.00" required></td>
+          <td><input name="items[${idx}].quantity" type="number" min="1" value="1"
+                     class="form-control" required></td>
+          <td><input name="items[${idx}].unitPrice" type="number" step="0.01" value="0.00"
+                     class="form-control" required></td>
           <td>
             <button type="button" class="btn btn-sm btn-outline-danger"
                     onclick="removeRow(this)">✕</button>
@@ -154,16 +193,17 @@
     }
     function removeRow(btn) {
         btn.closest('tr').remove();
-        [...document.querySelectorAll('#itemTable tbody tr')]
-            .forEach((tr, i) => {
-                tr.querySelectorAll('input').forEach(inp => {
-                    inp.name = inp.name.replace(/items\[\d+]/, `items[${i}]`);
-                });
+        document.querySelectorAll('#itemTable tbody tr').forEach((tr, i) => {
+            tr.querySelectorAll('input').forEach(inp => {
+                inp.name = inp.name.replace(/items\[\d+]/, `items[${i}]`);
             });
+        });
     }
+    // ensure at least one row on load
     if (!document.querySelector('#itemTable tbody').children.length) {
         addRow();
     }
 </script>
+
 </body>
 </html>

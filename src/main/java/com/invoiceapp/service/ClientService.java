@@ -34,8 +34,22 @@ public class ClientService {
 
     //Create new client
     public ClientResponse create(ClientRequest req) {
+
+        User user = userProvider.getCurrentUser();
+
+        if (repo.existsByNameAndUser(req.name(), user)) {
+            throw new IllegalArgumentException("A client with this name already exists.");
+        }
+
+        if (repo.existsByEmailAndUser(req.email(), user)) {
+            throw new IllegalArgumentException("A client with this email already exists.");
+        }
+        if (repo.existsByPhoneAndUser(req.phone(), user)) {
+            throw new IllegalArgumentException("A client with this phone already exists.");
+        }
+
         Client entity = ClientMapper.toEntity(req);
-        entity.setUser(userProvider.getCurrentUser());
+        entity.setUser(user);
         Client saved = repo.save(entity);
         return ClientMapper.toDto(saved);
     }
@@ -54,8 +68,20 @@ public class ClientService {
     public ClientResponse update(Long id, ClientRequest req) {
         User user = userProvider.getCurrentUser();
         Client client = repo.findById(id)
-                .filter(c -> c.getUser().equals(user)) // ✅ secure
+                .filter(c -> c.getUser().equals(user))
                 .orElseThrow(() -> new EntityNotFoundException("Client not found or access denied"));
+
+        if (repo.existsByNameAndUserAndIdNot(req.name(), user, id)) {
+            throw new IllegalArgumentException("Another client with this name already exists.");
+        }
+
+        // Check for conflicts (exclude current client)
+        if (repo.existsByEmailAndUserAndIdNot(req.email(), user, id)) {
+            throw new IllegalArgumentException("Another client with this email already exists.");
+        }
+        if (repo.existsByPhoneAndUserAndIdNot(req.phone(), user, id)) {
+            throw new IllegalArgumentException("Another client with this phone already exists.");
+        }
 
         client.setName(req.name());
         client.setEmail(req.email());
@@ -68,14 +94,26 @@ public class ClientService {
     public void update(ClientForm form) {
         User user = userProvider.getCurrentUser();
         Client client = repo.findById(form.getId())
-                .filter(c -> c.getUser().equals(user)) // ✅ secure
+                .filter(c -> c.getUser().equals(user))
                 .orElseThrow(() -> new EntityNotFoundException("Client not found or access denied"));
+
+        if (repo.existsByNameAndUserAndIdNot(form.getName(), user, form.getId())) {
+            throw new IllegalArgumentException("Another client with this name already exists.");
+        }
+
+        if (repo.existsByEmailAndUserAndIdNot(form.getEmail(), user, form.getId())) {
+            throw new IllegalArgumentException("Another client with this email already exists.");
+        }
+        if (repo.existsByPhoneAndUserAndIdNot(form.getPhone(), user, form.getId())) {
+            throw new IllegalArgumentException("Another client with this phone already exists.");
+        }
 
         client.setName(form.getName());
         client.setEmail(form.getEmail());
         client.setPhone(form.getPhone());
         repo.save(client);
     }
+
 
 
 

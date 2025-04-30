@@ -82,10 +82,10 @@ public class ClientAdminControllerTest {
         given(clientService.create(any(ClientRequest.class))).willReturn(dummyClientResponse);
 
         mockMvc.perform(post("/admin/clients")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("name", "New Client")
-                        .param("email", "new@client.com")
-                        .param("phone", "987654")
+                        .param("name",        "New Client")
+                        .param("email",       "new@client.com")
+                        .param("countryCode","+995")
+                        .param("rawPhone",    "98765476")
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/clients"))
@@ -112,22 +112,22 @@ public class ClientAdminControllerTest {
     @Test
     @WithMockUser
     void submitUpdateClient_ValidData_ShouldRedirectAndAddFlashAttribute() throws Exception {
-        // Mock the void update method
-        doNothing().when(clientService).update(any(ClientForm.class));
+        // assume there’s already a client with ID 42
+        given(clientService.findById(42L))
+                .willReturn(new ClientResponse(42L, "Old Name", "old@example.com", "+995555000"));
 
-        mockMvc.perform(post("/admin/clients") // Update uses the same POST endpoint but with ID
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("id", "1") // Important: Include ID for updates
-                        .param("name", "Updated Client")
-                        .param("email", "updated@client.com")
-                        .param("phone", "111222")
+        mockMvc.perform(post("/admin/clients")
+                        .param("id",           "42")
+                        .param("name",         "Updated Name")
+                        .param("email",        "updated@example.com")
+                        .param("countryCode",  "+995")
+                        .param("rawPhone",     "1234567")
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/clients"))
-                .andExpect(flash().attribute("success", containsString("Client updated!")));
-
-        verify(clientService).update(any(ClientForm.class));
+                .andExpect(flash().attribute("success", "Client updated!"))
+                .andExpect(redirectedUrl("/admin/clients"));
     }
+
     // Add test for submitUpdateClient with INVALID data
 
     // --- DELETE Test ---

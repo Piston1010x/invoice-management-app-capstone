@@ -1,5 +1,6 @@
 package com.invoiceapp.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @SuppressWarnings("JpaDataSourceORMInspection")
@@ -20,5 +21,4 @@ public class Client {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
 }

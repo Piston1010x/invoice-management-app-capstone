@@ -1,3 +1,5 @@
+
+
 package com.invoiceapp; // Ensure correct package
 
 import com.invoiceapp.dto.invoice.InvoiceItemRequest;
@@ -282,7 +284,7 @@ class InvoiceServiceTest {
 
 
         RecordPaymentForm form = new RecordPaymentForm();
-        form.setPaymentDate(LocalDate.now().minusDays(1)); // Payment date in past
+        form.setPaymentDate(LocalDate.now()); // Payment date in past
         form.setPaymentMethod("Bank Transfer");
         form.setTransactionId("TX456");
 

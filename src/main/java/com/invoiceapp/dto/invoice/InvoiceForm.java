@@ -16,6 +16,7 @@ import java.util.List;
 @Setter
 @Getter
 public class InvoiceForm {
+    private Long id;                 // ← NEW
     private Long clientId;
     @NotNull @FutureOrPresent
     private LocalDate dueDate;

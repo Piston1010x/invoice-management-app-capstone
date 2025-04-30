@@ -1,7 +1,7 @@
 // src/main/java/com/invoiceapp/controller/AuthController.java
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.mvccontroller;
 
-import com.invoiceapp.dto.RegisterForm;
+import com.invoiceapp.dto.misc.RegisterForm;
 import com.invoiceapp.entity.Role;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.UserRepository;
@@ -20,7 +20,7 @@ public class AuthController {
     private final UserRepository repo;
     private final PasswordEncoder encoder;
 
-    /* ---------- Register ---------- */
+    //Registration form
     @GetMapping("/register")
     public String registerForm(Model m) {
         m.addAttribute("form", new RegisterForm(null,null,null));
@@ -49,11 +49,12 @@ public class AuthController {
                 true
         ));
 
+        // show login page with message
         m.addAttribute("success","Account created – you can now log in.");
-        return "login";            // show login page with message
+        return "login";
     }
 
-    /* ---------- Login page ---------- */
+    //Login page
     @GetMapping("/login")
     public String loginPage() { return "login"; }
 }

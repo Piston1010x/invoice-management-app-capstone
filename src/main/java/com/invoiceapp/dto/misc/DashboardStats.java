@@ -1,8 +1,8 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.misc;
 
 import java.math.BigDecimal;
 
-// src/main/java/com/invoiceapp/dto/DashboardStats.java
+//dashboard statistics dto
 public record DashboardStats(
         long totalInvoices,
         long draft, long sent, long overdue, long paid,

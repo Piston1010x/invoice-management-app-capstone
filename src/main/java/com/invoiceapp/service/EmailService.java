@@ -1,4 +1,3 @@
-// src/main/java/com/invoiceapp/service/EmailService.java
 package com.invoiceapp.service;
 
 import jakarta.mail.internet.MimeMessage;
@@ -15,6 +14,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    //from email
     @Value("${invoiceapp.mail.from}")
     private String from;
 
@@ -26,11 +26,12 @@ public class EmailService {
         sendMime(to, subject, bodyHtml, pdfBytes, fileName, "application/pdf");
     }
 
+    //used for payment confirmation
     public void simpleNotify(String to, String subject, String text) {
         sendMime(to, subject, text, null, null, null);
     }
 
-    /** New: explicitly send an HTML‐only message (no attachment) */
+    // reminder email
     public void sendHtml(String to, String subject, String htmlBody) {
         sendMime(to, subject, htmlBody, null, null, null);
     }

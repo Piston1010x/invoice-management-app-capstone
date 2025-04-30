@@ -1,4 +1,4 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.invoice;
 
 import com.invoiceapp.entity.Currency;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -10,6 +10,9 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+//invoice form dto
+
 @Setter
 @Getter
 public class InvoiceForm {

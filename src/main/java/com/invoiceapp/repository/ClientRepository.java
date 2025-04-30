@@ -8,11 +8,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+//repo class for client entity
+public interface ClientRepository extends JpaRepository<Client, Long> {
 
-public interface ClientRepository   extends JpaRepository<Client, Long> {
     Optional<User> findByEmail(String email);
     Page<Client> findAll(Pageable pageable);
     List<Client> findAllByUser(User user);
     Page<Client> findAllByUser(User user, Pageable pageable);
+    boolean existsByEmailAndUser(String email, User user);
+    boolean existsByPhoneAndUser(String phone, User user);
 
 }

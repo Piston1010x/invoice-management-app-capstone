@@ -1,9 +1,9 @@
 package com.invoiceapp; // Ensure correct package
 
-import com.invoiceapp.dto.ClientRequest;
-import com.invoiceapp.dto.InvoiceItemRequest;
-import com.invoiceapp.dto.InvoiceRequest;
-import com.invoiceapp.dto.RegisterForm;
+import com.invoiceapp.dto.client.ClientRequest;
+import com.invoiceapp.dto.invoice.InvoiceItemRequest;
+import com.invoiceapp.dto.invoice.InvoiceRequest;
+import com.invoiceapp.dto.misc.RegisterForm;
 import com.invoiceapp.entity.Currency;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;

@@ -1,8 +1,10 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.invoice;
 
 import jakarta.validation.constraints.DecimalMin;
 
 import java.math.BigDecimal;
+
+//invoice item form: desc, qty, price
 
 public class InvoiceItemForm {
     private String description;

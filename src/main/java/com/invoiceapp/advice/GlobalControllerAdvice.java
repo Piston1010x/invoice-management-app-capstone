@@ -1,5 +1,4 @@
-// src/main/java/com/invoiceapp/config/GlobalControllerAdvice.java
-package com.invoiceapp.config;
+package com.invoiceapp.advice;
 
 import com.invoiceapp.exception.ClientHasActiveInvoicesException;
 import org.springframework.web.bind.annotation.ControllerAdvice;

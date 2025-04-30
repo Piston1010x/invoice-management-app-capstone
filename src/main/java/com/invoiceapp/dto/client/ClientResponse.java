@@ -1,4 +1,6 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.client;
+
+//client response dto
 
 public record ClientResponse(
         Long id,

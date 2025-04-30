@@ -1,9 +1,11 @@
 
 package com.invoiceapp; // Ensure correct package
 
-import com.invoiceapp.controller.InvoiceAdminController;
-import com.invoiceapp.dto.*;
-import com.invoiceapp.entity.Client;
+import com.invoiceapp.controller.mvccontroller.InvoiceAdminController;
+import com.invoiceapp.dto.client.ClientResponse;
+import com.invoiceapp.dto.invoice.InvoiceRequest;
+import com.invoiceapp.dto.invoice.InvoiceResponse;
+import com.invoiceapp.dto.invoice.RecordPaymentForm;
 import com.invoiceapp.entity.Currency;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
@@ -18,15 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import; // Import annotation
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 
 import java.math.BigDecimal;
@@ -37,7 +38,6 @@ import java.util.Optional;
 
 // Import Hamcrest matchers individually if needed for MockMvc assertions, or keep wildcard if heavily used there
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.anyInt; // Keep specific argument matchers
 import static org.mockito.ArgumentMatchers.eq;     // Keep specific argument matchers
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*; // Keep Mockito verify etc.
@@ -53,11 +53,16 @@ public class InvoiceAdminControllerTest {
     private MockMvc mockMvc;
 
     // @MockBean deprecation warnings can likely be ignored for now
-    @MockBean private InvoiceService invoiceService;
-    @MockBean private ClientService clientService;
-    @MockBean private InvoicePdfService pdfService;
-    @MockBean private UserProvider userProvider;
-    @MockBean private DbUserDetailsService userDetailsService;
+    @MockitoBean
+    private InvoiceService invoiceService;
+    @MockitoBean
+    private ClientService clientService;
+    @MockitoBean
+    private InvoicePdfService pdfService;
+    @MockitoBean
+    private UserProvider userProvider;
+    @MockitoBean
+    private DbUserDetailsService userDetailsService;
 
     private InvoiceResponse dummyInvoiceResponse;
     private ClientResponse dummyClientResponse;

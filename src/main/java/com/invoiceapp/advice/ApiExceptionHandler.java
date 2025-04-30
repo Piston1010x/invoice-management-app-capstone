@@ -1,4 +1,4 @@
-package com.invoiceapp.exception;
+package com.invoiceapp.advice;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;

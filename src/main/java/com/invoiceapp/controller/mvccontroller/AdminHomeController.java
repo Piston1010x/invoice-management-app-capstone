@@ -1,7 +1,7 @@
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.mvccontroller;
 
-import com.invoiceapp.dto.DashboardStats;
-import com.invoiceapp.dto.InvoiceResponse;
+import com.invoiceapp.dto.misc.DashboardStats;
+import com.invoiceapp.dto.invoice.InvoiceResponse;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.service.DashboardService;
 import com.invoiceapp.service.InvoiceService;
@@ -29,12 +29,14 @@ public class AdminHomeController {
     private final UserService userService;
     private final InvoiceService invoiceService;
 
-    /** Redirect /admin → /admin/dashboard */
+    // Redirect /admin to /admin/dashboard
     @GetMapping
     public String rootRedirect() {
         return "redirect:/admin/dashboard";
     }
 
+
+    //Main dashboard
     @GetMapping("/dashboard")
     public String dashboard(
             Model model,

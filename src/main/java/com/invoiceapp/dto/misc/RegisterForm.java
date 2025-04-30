@@ -1,8 +1,8 @@
-// src/main/java/com/invoiceapp/dto/RegisterForm.java
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.misc;
 
 import jakarta.validation.constraints.*;
 
+//registration form
 public record RegisterForm(
         @NotBlank
         @Email

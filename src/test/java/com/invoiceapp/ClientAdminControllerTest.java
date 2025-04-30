@@ -1,10 +1,10 @@
 
 package com.invoiceapp;
 
-import com.invoiceapp.controller.ClientAdminController;
-import com.invoiceapp.dto.ClientForm;
-import com.invoiceapp.dto.ClientRequest;
-import com.invoiceapp.dto.ClientResponse;
+import com.invoiceapp.controller.mvccontroller.ClientAdminController;
+import com.invoiceapp.dto.client.ClientForm;
+import com.invoiceapp.dto.client.ClientRequest;
+import com.invoiceapp.dto.client.ClientResponse;
 import com.invoiceapp.security.DbUserDetailsService;
 import com.invoiceapp.security.UserProvider;
 import com.invoiceapp.service.ClientService;
@@ -12,20 +12,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
         import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -40,9 +38,12 @@ public class ClientAdminControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean private ClientService clientService;
-    @MockBean private UserProvider userProvider; // If needed by service indirectly
-    @MockBean private DbUserDetailsService userDetailsService; // For security
+    @MockitoBean
+    private ClientService clientService;
+    @MockitoBean
+    private UserProvider userProvider; // If needed by service indirectly
+    @MockitoBean
+    private DbUserDetailsService userDetailsService; // For security
 
     private ClientResponse dummyClientResponse;
 

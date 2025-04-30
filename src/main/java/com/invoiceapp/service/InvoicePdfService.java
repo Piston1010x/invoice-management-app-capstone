@@ -29,7 +29,7 @@ import java.util.List;
 @Service
 public class InvoicePdfService {
 
-
+    //generate invoice pdf
     public byte[] generate(Invoice inv) {
         Document doc = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -38,7 +38,7 @@ public class InvoicePdfService {
             PdfWriter writer = PdfWriter.getInstance(doc, baos);
             doc.open();
 
-            // ─── Watermark if PAID ──────────────────────────────
+            //add fulfilled watermark if invoice is paid
             if (inv.getStatus() == InvoiceStatus.PAID) {
                 PdfContentByte canvas = writer.getDirectContentUnder();
                 Font wm = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 60, new GrayColor(0.85f));
@@ -52,7 +52,7 @@ public class InvoicePdfService {
                 );
             }
 
-            // ─── Header & dates ─────────────────────────────────
+            //headers and dates
             Font h1 = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
             Font normal = FontFactory.getFont(FontFactory.HELVETICA, 12);
             doc.add(new Paragraph("Invoice " + inv.getInvoiceNumber(), h1));
@@ -60,7 +60,7 @@ public class InvoicePdfService {
             doc.add(new Paragraph("Due date: " + inv.getDueDate(), normal));
             doc.add(Chunk.NEWLINE);
 
-            // ─── From / To table ────────────────────────────────
+            //from name and to name tables
             PdfPTable header = new PdfPTable(2);
             header.setWidthPercentage(100);
             PdfPCell fromCell = new PdfPCell();
@@ -80,11 +80,12 @@ public class InvoicePdfService {
             doc.add(header);
             doc.add(Chunk.NEWLINE);
 
-            // ─── Items table ────────────────────────────────────
+            //items table
             PdfPTable table = new PdfPTable(new float[]{3, 1, 2, 2});
             table.setWidthPercentage(100);
             addHeader(table, "Description", "Qty", "Unit Price", "Amount");
 
+            //iterate through inv items and create corresponding tables
             for (InvoiceItem it : inv.getItems()) {
                 table.addCell(it.getDescription());
                 table.addCell(String.valueOf(it.getQuantity()));
@@ -108,6 +109,8 @@ public class InvoicePdfService {
         return baos.toByteArray();
     }
 
+
+    //helper method to add headers
     private void addHeader(PdfPTable t, String... labels) {
         for (String l : labels) {
             PdfPCell cell = new PdfPCell(new Phrase(l, FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
@@ -116,7 +119,7 @@ public class InvoicePdfService {
         }
     }
 
-
+    //method to generate receiot
     public byte[] generateReceipt(Invoice inv) {
         // use a receipt-friendly size & tighter margins
         Document doc = new Document(PageSize.A6, 20, 20, 20, 20);
@@ -125,14 +128,14 @@ public class InvoicePdfService {
             PdfWriter.getInstance(doc, baos);
             doc.open();
 
-            // ——— Title (centered) —————————————————————————————
+            //title
             Font h1 = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
             Paragraph title = new Paragraph("Payment Receipt", h1);
             title.setAlignment(Element.ALIGN_CENTER);
             doc.add(title);
             doc.add(Chunk.NEWLINE);
 
-            // ——— Info block ————————————————————————————————————
+            //info tx/inv number etc.
             Font normal = FontFactory.getFont(FontFactory.HELVETICA, 10);
             PdfPTable info = new PdfPTable(2);
             info.setWidthPercentage(100);
@@ -146,7 +149,7 @@ public class InvoicePdfService {
             doc.add(info);
             doc.add(Chunk.NEWLINE);
 
-            // ——— Items table ————————————————————————————————————
+            //items
             PdfPTable table = new PdfPTable(new float[]{4,1,2});
             table.setWidthPercentage(100);
             table.setSpacingBefore(5f);

@@ -1,13 +1,10 @@
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.mvccontroller;
 
-import com.invoiceapp.dto.ClientForm;
-import com.invoiceapp.dto.ClientRequest;
-import com.invoiceapp.dto.ClientResponse;
+import com.invoiceapp.dto.client.ClientForm;
+import com.invoiceapp.dto.client.ClientRequest;
+import com.invoiceapp.dto.client.ClientResponse;
 import com.invoiceapp.service.ClientService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
@@ -22,7 +19,8 @@ public class ClientAdminController {
 
     private final ClientService clientService;
 
-    // src/main/java/com/invoiceapp/controller/ClientAdminController.java
+
+    //Show client list
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "20") int size,
@@ -35,6 +33,8 @@ public class ClientAdminController {
         return "admin/client-list";
     }
 
+
+    //Client form
     @GetMapping("/new")
     public String newForm(Model m) {
         m.addAttribute("form", new ClientForm());
@@ -42,7 +42,7 @@ public class ClientAdminController {
     }
 
 
-
+    //Delete client
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
         clientService.delete(id); // you’ll implement this in the service/repo
@@ -50,6 +50,7 @@ public class ClientAdminController {
         return "redirect:/admin/clients";
     }
 
+    //Edit client
     @GetMapping("/{id}/edit")
     public String edit(@PathVariable Long id, Model model) {
         ClientResponse dto = clientService.findById(id);
@@ -65,6 +66,8 @@ public class ClientAdminController {
         return "admin/client-form";
     }
 
+
+    //Create new client or update existing client
     @PostMapping
     public String submit(@Valid @ModelAttribute("form") ClientForm form,
                          RedirectAttributes ra) {

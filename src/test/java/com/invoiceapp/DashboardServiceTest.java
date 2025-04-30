@@ -1,6 +1,6 @@
 package com.invoiceapp;
 
-import com.invoiceapp.dto.DashboardStats;
+import com.invoiceapp.dto.misc.DashboardStats;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.InvoiceRepository;

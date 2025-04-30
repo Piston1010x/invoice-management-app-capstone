@@ -1,8 +1,7 @@
 // src/test/java/com/invoiceapp/SecurityConfigTest.java
 package com.invoiceapp;
 
-import com.invoiceapp.controller.*;
-import com.invoiceapp.dto.DashboardStats;
+import com.invoiceapp.dto.misc.DashboardStats;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.entity.Role;
 import com.invoiceapp.repository.InvoiceRepository; // <-- IMPORT MISSING REPO
@@ -11,15 +10,14 @@ import com.invoiceapp.security.DbUserDetailsService;
 import com.invoiceapp.security.SecurityConfig;
 import com.invoiceapp.security.UserProvider;
 import com.invoiceapp.service.*;
-import jakarta.persistence.EntityNotFoundException; // Import if needed for mocking
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -42,18 +40,27 @@ public class SecurityConfigTest {
     private MockMvc mockMvc;
 
     // Mock dependencies of controllers potentially loaded in the test slice
-    @MockBean private DbUserDetailsService userDetailsService;
-    @MockBean private DashboardService dashboardService;
-    @MockBean private UserService userService;
-    @MockBean private InvoiceService invoiceService;
-    @MockBean private ClientService clientService;
-    @MockBean private InvoicePdfService pdfService;
-    @MockBean private UserProvider userProvider;
-    @MockBean private EmailService emailService;
+    @MockitoBean
+    private DbUserDetailsService userDetailsService;
+    @MockitoBean
+    private DashboardService dashboardService;
+    @MockitoBean
+    private UserService userService;
+    @MockitoBean
+    private InvoiceService invoiceService;
+    @MockitoBean
+    private ClientService clientService;
+    @MockitoBean
+    private InvoicePdfService pdfService;
+    @MockitoBean
+    private UserProvider userProvider;
+    @MockitoBean
+    private EmailService emailService;
 
     // Mock Repositories directly needed by controllers in the slice
-    @MockBean private UserRepository userRepository;
-    @MockBean // <--- FIX: Mock the missing InvoiceRepository
+    @MockitoBean
+    private UserRepository userRepository;
+    @MockitoBean // <--- FIX: Mock the missing InvoiceRepository
     private InvoiceRepository invoiceRepository;
 
 

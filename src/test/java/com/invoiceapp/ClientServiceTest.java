@@ -1,15 +1,14 @@
 
 package com.invoiceapp;
 
-import com.invoiceapp.dto.ClientForm;
-import com.invoiceapp.dto.ClientRequest;
-import com.invoiceapp.dto.ClientResponse;
+import com.invoiceapp.dto.client.ClientForm;
+import com.invoiceapp.dto.client.ClientRequest;
+import com.invoiceapp.dto.client.ClientResponse;
 import com.invoiceapp.entity.Client;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.ClientRepository;
 import com.invoiceapp.security.UserProvider;
 import com.invoiceapp.service.ClientService;
-import com.invoiceapp.util.ClientMapper; // If static, no mock needed
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -225,5 +224,6 @@ public class ClientServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).id()).isEqualTo(testClient.getId());
         verify(clientRepository).findAllByUser(testUser, expectedPageable);
+
     }
 }

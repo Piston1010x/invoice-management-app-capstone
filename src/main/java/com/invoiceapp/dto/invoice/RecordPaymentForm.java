@@ -1,10 +1,11 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.invoice;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+
+//mark paid form
 
 @Data
 public class RecordPaymentForm {

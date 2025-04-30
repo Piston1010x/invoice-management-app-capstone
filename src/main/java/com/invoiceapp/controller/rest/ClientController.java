@@ -1,6 +1,7 @@
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.rest;
 
-import com.invoiceapp.dto.*;
+import com.invoiceapp.dto.client.ClientRequest;
+import com.invoiceapp.dto.client.ClientResponse;
 import com.invoiceapp.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

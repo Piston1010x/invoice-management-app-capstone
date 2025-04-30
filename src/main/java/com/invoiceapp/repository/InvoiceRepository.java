@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-
+//repo class for invoice entity
 public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
     List<Invoice> findByStatus(InvoiceStatus status);
     Optional<Invoice> findByPaymentToken(String token);

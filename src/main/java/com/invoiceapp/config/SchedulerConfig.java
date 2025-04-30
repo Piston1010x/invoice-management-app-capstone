@@ -1,4 +1,3 @@
-// src/main/java/com/invoiceapp/config/SchedulerConfig.java
 package com.invoiceapp.config;
 
 import com.invoiceapp.entity.Invoice;
@@ -32,7 +31,6 @@ public class SchedulerConfig {
 
     /**
      * Runs on the cron defined in application.properties.
-     * (e.g. every minute in dev, once daily in prod).
      */
     @Scheduled(cron = "${invoiceapp.overdue.cron}")
     @Transactional
@@ -59,6 +57,8 @@ public class SchedulerConfig {
         }
     }
 
+
+    //Send overdye reminder to client
     private void sendReminderToClient(Invoice inv) {
         String subject = "Overdue Invoice " + inv.getInvoiceNumber();
         String body = String.format(
@@ -72,6 +72,7 @@ public class SchedulerConfig {
         emailService.sendHtml(inv.getClient().getEmail(), subject, body);
     }
 
+    //Send overdye reminder to the user
     private void sendReminderToIssuer(Invoice inv) {
         User u = inv.getUser();
         String who = u.getEmail();

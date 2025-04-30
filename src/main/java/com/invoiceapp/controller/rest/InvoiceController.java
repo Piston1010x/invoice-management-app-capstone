@@ -1,7 +1,8 @@
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.rest;
 
-import com.invoiceapp.dto.InvoiceRequest;
-import com.invoiceapp.dto.InvoiceResponse;
+import com.invoiceapp.dto.invoice.InvoiceRequest;
+import com.invoiceapp.dto.invoice.InvoiceResponse;
+import com.invoiceapp.dto.invoice.RecordPaymentForm;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.UserRepository;
@@ -56,8 +57,8 @@ public class InvoiceController {
         return service.send(id);
     }
 
-   /** @PostMapping("/{id}/mark-paid")
-    public InvoiceResponse markPaid(@PathVariable Long id) {
-        return service.markPaid(id);
-    }**/
+    @PostMapping("/{id}/mark-paid")
+    public InvoiceResponse markPaid(@PathVariable Long id, RecordPaymentForm form) {
+        return service.markPaid(id, form);
+    }
 }

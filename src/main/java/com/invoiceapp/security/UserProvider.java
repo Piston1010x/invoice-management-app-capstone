@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 public class UserProvider {
     private final UserRepository userRepo;
 
+
+    //retrieve the current logged in user, used during program runtime
     public User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepo.findByEmail(email)

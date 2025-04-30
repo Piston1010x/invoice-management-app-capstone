@@ -1,6 +1,6 @@
 package com.invoiceapp.service;
 
-import com.invoiceapp.dto.DashboardStats;
+import com.invoiceapp.dto.misc.DashboardStats;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.InvoiceRepository;
@@ -16,18 +16,15 @@ public class DashboardService {
 
     private final InvoiceRepository repo;
 
-    /**
-     * Default: stats from start of month → today.
-     */
+    //default stats from start of month → today.
+
     public DashboardStats getStatsFor(User user) {
         LocalDate start = LocalDate.now().withDayOfMonth(1);
         LocalDate end   = LocalDate.now();
         return getStatsFor(user, start, end);
     }
 
-    /**
-     * Stats for a custom date range (inclusive).
-     */
+    //stats for a custom date range (inclusive).
     public DashboardStats getStatsFor(User user, LocalDate from, LocalDate to) {
         // counts
         long draft   = repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(

@@ -1,7 +1,6 @@
-// src/main/java/com/invoiceapp/util/InvoiceMapper.java
 package com.invoiceapp.util;
 
-import com.invoiceapp.dto.*;
+import com.invoiceapp.dto.invoice.*;
 import com.invoiceapp.entity.*;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +11,8 @@ import java.util.List;
 public final class InvoiceMapper {
     private InvoiceMapper() {}
 
+
+    //Maps invoice request (dto) to invoice (entity)
     public static Invoice toEntity(InvoiceRequest dto, Client client) {
         Invoice inv = new Invoice();
         inv.setClient(client);
@@ -32,6 +33,7 @@ public final class InvoiceMapper {
         return inv;
     }
 
+    //Maps invoice (entity) to invoice (dto)
     public static InvoiceResponse toDto(Invoice inv) {
         return new InvoiceResponse(
                 inv.getId(),
@@ -57,14 +59,15 @@ public final class InvoiceMapper {
         );
     }
 
+
+    //Converts UI form to InvoiceRequest object
     public static InvoiceRequest fromForm(InvoiceForm f) {
         List<InvoiceItemRequest> items = f.getItems().stream()
                 .filter(r -> r.getDescription() != null && !r.getDescription().isBlank())
                 .map(r -> new InvoiceItemRequest(
                         r.getDescription(),
                         r.getQuantity() == null ? 1 : r.getQuantity(),
-                        r.getUnitPrice() == null ? BigDecimal.ZERO : r.getUnitPrice()
-                ))
+                        r.getUnitPrice() == null ? BigDecimal.ZERO : r.getUnitPrice()))
                 .toList();
 
         return new InvoiceRequest(
@@ -80,6 +83,7 @@ public final class InvoiceMapper {
 
 }
 
+    //Converts InvoiceResponse form to UI form
     public static InvoiceForm toForm(InvoiceResponse dto) {
         InvoiceForm f = new InvoiceForm();
         f.setClientId(dto.clientId());

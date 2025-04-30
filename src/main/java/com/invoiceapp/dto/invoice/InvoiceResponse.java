@@ -1,15 +1,14 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.invoice;
 
-import com.invoiceapp.dto.InvoiceItemResponse;
 import com.invoiceapp.entity.Currency;
 import com.invoiceapp.entity.InvoiceStatus;
 import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+
+//invoice response dto
 
 @Builder
 public record InvoiceResponse(

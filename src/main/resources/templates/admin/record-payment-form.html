@@ -21,7 +21,7 @@
 <!-- ───────── Invoice quick-summary ───────── -->
 <div class="alert alert-secondary">
     <strong th:text="${invoice.invoiceNumber}">INV-00001</strong> &nbsp;•&nbsp;
-    Client&nbsp;<span th:text="${invoice.clientName}">Acme Ltd</span> &nbsp;•&nbsp;
+    Client&nbsp;<span th:text="${invoice.clientName}">Epam Systems</span> &nbsp;•&nbsp;
     Amount&nbsp;<span th:text="${#numbers.formatDecimal(invoice.total,1,'COMMA',2,'POINT')}">$ 0.00</span>
 </div>
 
@@ -36,6 +36,7 @@
                 <label class="form-label">Payment date</label>
                 <input type="date" class="form-control"
                        th:field="*{paymentDate}"
+                       th:attr="min=${invoice.issueDate}"
                        th:classappend="${#fields.hasErrors('paymentDate')} ? 'is-invalid'">
                 <div class="invalid-feedback"
                      th:errors="*{paymentDate}">Date required</div>
@@ -49,8 +50,6 @@
                     <option value="" disabled selected>Select method</option>
                     <option value="Credit Card">Credit Card</option>
                     <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Check">Check</option>
                     <option value="Other">Other</option>
                 </select>
                 <div class="invalid-feedback"

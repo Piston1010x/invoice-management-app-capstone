@@ -11,6 +11,7 @@ public class UserService {
 
     private final UserRepository repo;
 
+    //Method to find user by email
     public User findByEmail(String email) {
         return repo.findByEmail(email)
                 .map(obj -> obj) // Only if your current findByEmail returns Optional<Object>

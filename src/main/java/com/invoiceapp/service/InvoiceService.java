@@ -1,8 +1,8 @@
 package com.invoiceapp.service;
 
-import com.invoiceapp.dto.InvoiceRequest;
-import com.invoiceapp.dto.InvoiceResponse;
-import com.invoiceapp.dto.RecordPaymentForm;
+import com.invoiceapp.dto.invoice.InvoiceRequest;
+import com.invoiceapp.dto.invoice.InvoiceResponse;
+import com.invoiceapp.dto.invoice.RecordPaymentForm;
 import com.invoiceapp.entity.*;
 import com.invoiceapp.repository.*;
 import com.invoiceapp.security.UserProvider;
@@ -14,7 +14,6 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -23,17 +22,18 @@ import java.util.*;
 @RequiredArgsConstructor
 public class InvoiceService {
 
-    private final InvoiceRepository       invoiceRepo;
-    private final ClientRepository        clientRepo;
+    private final InvoiceRepository invoiceRepo;
+    private final ClientRepository clientRepo;
     private final InvoiceMetricRepository metricRepo;
     private final InvoiceNumberGenerator numberGenerator;
-    private final InvoicePdfService       pdfService;
-    private final EmailService            emailService;
-    private final UserProvider            userProvider;
-    private final InvoiceMapper           invoiceMapper;
+    private final InvoicePdfService pdfService;
+    private final EmailService emailService;
+    private final UserProvider userProvider;
+    private final InvoiceMapper invoiceMapper;
 
-    // ─── CREATE ─────────────────────────────────────────────────────────
+    //Create new invoice
     public InvoiceResponse create(InvoiceRequest dto) {
+        //retrieve current user
         User user = userProvider.getCurrentUser();
         Client client = clientRepo.findById(dto.clientId())
                 .orElseThrow(() -> new EntityNotFoundException("Client not found"));
@@ -42,7 +42,7 @@ public class InvoiceService {
         return InvoiceMapper.toDto(invoiceRepo.save(inv));
     }
 
-    // ─── LIST ────────────────────────────────────────────────────────────
+    //list all Invoices
     public Page<InvoiceResponse> list(Optional<InvoiceStatus> status, int page, int size) {
         Pageable p = PageRequest.of(page, size, Sort.by("id").descending());
         User usr = userProvider.getCurrentUser();
@@ -52,16 +52,32 @@ public class InvoiceService {
         return src.map(InvoiceMapper::toDto);
     }
 
-    // ─── READ ────────────────────────────────────────────────────────────
+    //retrieves entity converts to dto and returns dto
     public InvoiceResponse get(Long id) {
         return InvoiceMapper.toDto(getEntity(id));
     }
+    //retrieves raw invoice
     public Invoice getEntity(Long id) {
         return invoiceRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Invoice not found"));
     }
 
-    // ─── SEND ────────────────────────────────────────────────────────────
+
+
+
+
+    /** Sends the invoice by email and transitions it from DRAFT to SENT.
+     *
+     * - Validates that the invoice is in DRAFT status.
+     * - Updates status to SENT, sets issue date, generates invoice number and payment token.
+     * - Generates a PDF and sends it via email to the client with a payment confirmation link.
+     * - Returns the updated InvoiceResponse DTO.
+     *
+     * @param id the ID of the invoice to send
+     * @return the updated InvoiceResponse after sending
+     * @throws IllegalStateException if the invoice is not in DRAFT status
+     * @throws EntityNotFoundException if the invoice is not found */
+
     public InvoiceResponse send(Long id) {
         Invoice inv = getEntity(id);
         if (inv.getStatus() != InvoiceStatus.DRAFT)
@@ -87,23 +103,27 @@ public class InvoiceService {
         return InvoiceMapper.toDto(inv);
     }
 
-    // ─── MARK PAID ────────────────────────────────────────────────────────
+    //Method to mark an invoice as PAID
     public InvoiceResponse markPaid(Long id, RecordPaymentForm f) {
         Invoice inv = getEntity(id);
         if (!Set.of(InvoiceStatus.SENT, InvoiceStatus.OVERDUE).contains(inv.getStatus()))
             throw new IllegalStateException("Only SENT/OVERDUE can be paid");
         inv.setStatus(InvoiceStatus.PAID);
         inv.setPaymentDate(f.getPaymentDate());
+        if (f.getPaymentDate().isBefore(inv.getIssueDate())) {
+            throw new IllegalArgumentException("Payment date cannot be before the invoice issue date.");
+        }
+
         inv.setPaymentMethod(f.getPaymentMethod());
         inv.setPaymentNotes(f.getPaymentNotes());
-        inv.setTransactionId(f.getTransactionId());       // ← NEW
+        inv.setTransactionId(f.getTransactionId());
 
         snapshot(inv);
         return InvoiceMapper.toDto(inv);
     }
 
 
-    // ─── OVERDUE SWEEP ───────────────────────────────────────────────────
+    //checks for overdue invoices
     public int markOverdue() {
         return invoiceRepo.findActive(InvoiceStatus.SENT).stream()
                 .filter(i -> i.getDueDate().isBefore(LocalDate.now()))
@@ -111,7 +131,7 @@ public class InvoiceService {
                 .mapToInt(x -> 1).sum();
     }
 
-    // ─── UPDATE (EDIT DRAFT) ─────────────────────────────────────────────
+    //update invoice if its in draft state
     public InvoiceResponse update(Long invoiceId, InvoiceRequest dto) {
         Invoice inv = getEntity(invoiceId);
         if (inv.getStatus() != InvoiceStatus.DRAFT)
@@ -161,7 +181,7 @@ public class InvoiceService {
             }
         }
 
-        // re-freeze user
+        // refreeze user
         inv.setUser(userProvider.getCurrentUser());
 
         // save & return fresh DTO
@@ -169,7 +189,7 @@ public class InvoiceService {
         return InvoiceMapper.toDto(inv);
     }
 
-    // ─── SOFT DELETE ─────────────────────────────────────────────────────
+    //soft delete
     public void archive(Long id) {
         getEntity(id).setArchived(true);
     }
@@ -177,13 +197,12 @@ public class InvoiceService {
         archive(id);
     }
 
-    // ─── METRIC SNAPSHOT ─────────────────────────────────────────────────
+    //metric snapshot for stats
     private void snapshot(Invoice inv) {
         metricRepo.save(new InvoiceMetric(LocalDate.now(), inv.getStatus(), inv.getTotal()));
     }
-    /**
-     * Revert a PAID invoice back to SENT, clearing recorded payment details.
-     */
+
+    //revert a PAID invoice back to SENT, clearing recorded payment details./
     public InvoiceResponse revertPaymentStatus(Long id) {
         Invoice inv = getEntity(id);
         if (inv.getStatus() != InvoiceStatus.PAID) {
@@ -196,7 +215,7 @@ public class InvoiceService {
         inv.setPaymentMethod(null);
         inv.setPaymentAmountRecorded(null);
         inv.setPaymentNotes(null);
-        inv.setTransactionId(null); // <-- Add this line if needed
+        inv.setTransactionId(null);
 
         // persist changes
         invoiceRepo.save(inv);
@@ -205,6 +224,8 @@ public class InvoiceService {
         return InvoiceMapper.toDto(inv);
     }
 
+
+    //method for dashboard to retrieve last 5 invoices
     public List<InvoiceResponse> getRecentInvoices(String username, int count) {
         Pageable topFive = PageRequest.of(0, count, Sort.by("issueDate").descending());
         return invoiceRepo.findByUserEmail(username, topFive)

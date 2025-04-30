@@ -32,10 +32,13 @@
         <div class="col-md-3">
             <label class="form-label">Due date</label>
             <input type="date" class="form-control"
-                   th:field="*{dueDate}" required/>
+                   th:field="*{dueDate}"
+                   th:attr="min=${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}"
+                   required/>
             <div class="text-danger" th:if="${#fields.hasErrors('dueDate')}"
                  th:errors="*{dueDate}"></div>
         </div>
+
 
         <div class="col-md-3">
             <label class="form-label">Currency</label>

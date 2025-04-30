@@ -1,9 +1,11 @@
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.mvccontroller;
 
-import com.invoiceapp.dto.*;
+import com.invoiceapp.dto.invoice.InvoiceForm;
+import com.invoiceapp.dto.invoice.InvoiceRequest;
+import com.invoiceapp.dto.invoice.InvoiceResponse;
+import com.invoiceapp.dto.invoice.RecordPaymentForm;
 import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.entity.InvoiceStatus;
-import com.invoiceapp.entity.User;
 import com.invoiceapp.security.UserProvider;
 import com.invoiceapp.service.ClientService;
 import com.invoiceapp.service.InvoicePdfService;
@@ -16,15 +18,12 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -33,12 +32,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class InvoiceAdminController {
 
-    private final InvoiceService    invoiceService;
-    private final ClientService     clientService;
+    private final InvoiceService invoiceService;
+    private final ClientService clientService;
     private final InvoicePdfService pdfService;
-    private final UserProvider      userProvider;
+    private final UserProvider userProvider;
 
-    /* ─────────────────────────  LIST  ───────────────────────── */
+    //List all invoices
     @GetMapping
     public String list(@RequestParam Optional<InvoiceStatus> status,
                        @RequestParam(defaultValue = "0") int page,
@@ -53,7 +52,7 @@ public class InvoiceAdminController {
         return "admin/invoice-list";
     }
 
-    /* ─────────────────────────  SEND  ───────────────────────── */
+    //Send invoice
     @PostMapping("/{id}/send")
     public String send(@PathVariable Long id, RedirectAttributes ra) {
         invoiceService.send(id);
@@ -61,18 +60,18 @@ public class InvoiceAdminController {
         return "redirect:/admin/invoices";
     }
 
-    /* ───────  (GET)  RECORD-PAYMENT FORM  ─────── */
+    //Get payment form
     @GetMapping("/{id}/record-payment")
     public String paymentForm(@PathVariable Long id, Model model) {
         InvoiceResponse invoice = invoiceService.get(id);
         RecordPaymentForm form = new RecordPaymentForm();
         form.setPaymentDate(LocalDate.now());
         model.addAttribute("invoice", invoice);
-        model.addAttribute("form",    form);
+        model.addAttribute("form", form);
         return "admin/record-payment-form";
     }
 
-    /* ───────  (POST)  SAVE PAYMENT DETAILS  ─────── */
+    //Mark paid form
     @PostMapping("/{id}/mark-paid")
     public String submitPayment(@PathVariable Long id,
                                 @Valid @ModelAttribute("form") RecordPaymentForm form,
@@ -93,7 +92,7 @@ public class InvoiceAdminController {
         return "redirect:/admin/invoices";
     }
 
-    /* ────────────────────  CREATE  ──────────────────── */
+    //Get new invoice form
     @GetMapping("/new")
     public String newForm(Model model,
                           @RequestParam Optional<Long> clientId) {
@@ -107,12 +106,13 @@ public class InvoiceAdminController {
         return "admin/invoice-form";
     }
 
+    //Create new invoice
     @PostMapping
-    public String submit(@Valid @ModelAttribute("form") InvoiceForm form,   // ← add @Valid
-                         BindingResult result,                              // ← add BindingResult
+    public String submit(@Valid @ModelAttribute("form") InvoiceForm form,
+                         BindingResult result,
                          RedirectAttributes ra) {
 
-        if (result.hasErrors()) {                 // ← bounce back to the form
+        if (result.hasErrors()) {
             return "admin/invoice-form";
         }
 
@@ -122,7 +122,7 @@ public class InvoiceAdminController {
     }
 
 
-    /* ────────────────────  PDF  ──────────────────── */
+    //Download pdf iinvoice
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> downloadInvoicePdf(@PathVariable Long id) {
         byte[] pdf = pdfService.generate(invoiceService.getEntity(id));
@@ -133,7 +133,7 @@ public class InvoiceAdminController {
                 .body(pdf);
     }
 
-    /* ────────────────────  RECEIPT DOWNLOAD  ──────────────────── */
+    //Download receipt pdf
     @GetMapping("/{id}/receipt")
     public ResponseEntity<byte[]> downloadReceipt(@PathVariable Long id) {
         Invoice inv = invoiceService.getEntity(id);
@@ -146,11 +146,7 @@ public class InvoiceAdminController {
                                 .build().toString())
                 .body(pdf);
     }
-
-
-
-
-    /* ────────────────────  EDIT / UPDATE  ──────────────────── */
+    //Edit invoice form
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         InvoiceResponse dto = invoiceService.get(id);
@@ -160,6 +156,7 @@ public class InvoiceAdminController {
         return "admin/invoice-form";
     }
 
+    //Update invoice draft
     @PostMapping("/{id}/edit")
     public String update(@PathVariable Long id,
                          @Valid @ModelAttribute("form") InvoiceForm form,
@@ -179,7 +176,7 @@ public class InvoiceAdminController {
         return "redirect:/admin/invoices";
     }
 
-    /* ────────────────────  DELETE / ARCHIVE  ──────────────────── */
+    //Delete invoice
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id, RedirectAttributes ra) {
         invoiceService.delete(id);
@@ -187,7 +184,7 @@ public class InvoiceAdminController {
         return "redirect:/admin/invoices";
     }
 
-    /* ────────────────────  REVERT PAYMENT  ──────────────────── */
+    //Revert payment
     @PostMapping("/{id}/revert-payment")
     public String revertPayment(@PathVariable Long id,
                                 RedirectAttributes ra) {

@@ -14,13 +14,14 @@ public class InvoiceNumberGenerator {
     private final EntityManager em;
     private final UserProvider userProvider;
 
-    /** Creates “INV-00001”, “INV-00002”, … **for the current user**. */
+    //Creates invoice numbers: “INV-00001”
     @Transactional
     public String next() {
 
-        User user = userProvider.getCurrentUser();   // ① whose counter?
+        //get current user to determine which users count to use
+        User user = userProvider.getCurrentUser();
 
-        // ② grab the highest number that user already has
+        //grab the highest number that user already has
         Integer last = em.createQuery("""
              SELECT MAX(CAST(SUBSTRING(i.invoiceNumber, 5) AS int))
                FROM Invoice i
@@ -30,8 +31,10 @@ public class InvoiceNumberGenerator {
                 .setParameter("user", user)
                 .getSingleResult();
 
+        //if last invoice is null create first one, else increment last by 1
         int next = (last == null ? 1 : last + 1);
 
+        //return new invoice number
         return "INV-%05d".formatted(next);
     }
 }

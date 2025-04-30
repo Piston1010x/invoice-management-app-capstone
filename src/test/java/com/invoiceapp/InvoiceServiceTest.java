@@ -1,16 +1,15 @@
 package com.invoiceapp; // Ensure correct package
 
-import com.invoiceapp.dto.InvoiceItemRequest;
-import com.invoiceapp.dto.InvoiceRequest;
-import com.invoiceapp.dto.InvoiceResponse;
-import com.invoiceapp.dto.RecordPaymentForm;
+import com.invoiceapp.dto.invoice.InvoiceItemRequest;
+import com.invoiceapp.dto.invoice.InvoiceRequest;
+import com.invoiceapp.dto.invoice.InvoiceResponse;
+import com.invoiceapp.dto.invoice.RecordPaymentForm;
 import com.invoiceapp.entity.*;
 import com.invoiceapp.repository.*;
 import com.invoiceapp.security.UserProvider;
 import com.invoiceapp.service.EmailService;
 import com.invoiceapp.service.InvoicePdfService;
 import com.invoiceapp.service.InvoiceService;
-import com.invoiceapp.util.InvoiceMapper; // Assuming static usage, or mock if made non-static
 import com.invoiceapp.util.InvoiceNumberGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +28,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

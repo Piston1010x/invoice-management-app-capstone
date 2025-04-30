@@ -1,13 +1,14 @@
-package com.invoiceapp.dto;
+package com.invoiceapp.dto.invoice;
 
 import jakarta.validation.Valid;
-import jakarta.validation.*;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import com.invoiceapp.entity.Currency;
 import java.time.LocalDate;
 import java.util.List;
+
+//invoice dto
 
 public record InvoiceRequest(
         Long clientId,

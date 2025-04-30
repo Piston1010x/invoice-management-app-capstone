@@ -1,6 +1,8 @@
 package com.invoiceapp.service;
 
-import com.invoiceapp.dto.*;
+import com.invoiceapp.dto.client.ClientForm;
+import com.invoiceapp.dto.client.ClientRequest;
+import com.invoiceapp.dto.client.ClientResponse;
 import com.invoiceapp.entity.Client;
 import com.invoiceapp.entity.InvoiceStatus;
 import com.invoiceapp.entity.User;
@@ -26,25 +28,29 @@ import java.util.List;
 public class ClientService {
 
     private final ClientRepository repo;
-    private final ClientMapper mapper;          // <- mapper is a @Component bean
+    private final ClientMapper mapper;
     private final UserProvider userProvider;
     private final InvoiceRepository invoiceRepository;
+
+    //Create new client
     public ClientResponse create(ClientRequest req) {
         Client entity = ClientMapper.toEntity(req);
-        entity.setUser(userProvider.getCurrentUser()); // ✅ associate with user
+        entity.setUser(userProvider.getCurrentUser());
         Client saved = repo.save(entity);
         return ClientMapper.toDto(saved);
     }
 
+    //find client by id
     @Transactional(readOnly = true)
     public ClientResponse findById(Long id) {
         User user = userProvider.getCurrentUser();
         return repo.findById(id)
-                .filter(client -> client.getUser().equals(user)) // ✅ enforce ownership
+                .filter(client -> client.getUser().equals(user))
                 .map(ClientMapper::toDto)
                 .orElseThrow(() -> new EntityNotFoundException("Client %d not found or access denied".formatted(id)));
     }
 
+    //update for rest api
     public ClientResponse update(Long id, ClientRequest req) {
         User user = userProvider.getCurrentUser();
         Client client = repo.findById(id)
@@ -58,6 +64,7 @@ public class ClientService {
         return ClientMapper.toDto(repo.save(client));
     }
 
+    //update client info for ui layer
     public void update(ClientForm form) {
         User user = userProvider.getCurrentUser();
         Client client = repo.findById(form.getId())
@@ -67,10 +74,12 @@ public class ClientService {
         client.setName(form.getName());
         client.setEmail(form.getEmail());
         client.setPhone(form.getPhone());
-        repo.save(client); // <-- ADD THIS LINE TO PERSIST CHANGES
+        repo.save(client);
     }
 
 
+
+    //delete client (deletion is not allowed while there are active invoices)
     @Transactional
     public void delete(Long id) {
 
@@ -80,7 +89,7 @@ public class ClientService {
                 .orElseThrow(() ->
                         new EntityNotFoundException("Client not found or access denied"));
 
-        /* Block only invoices that still require action */
+        // Block only invoices that still require action
         var unpaidStatuses = List.of(
                 InvoiceStatus.SENT,
                 InvoiceStatus.OVERDUE);
@@ -89,10 +98,10 @@ public class ClientService {
                 .countByClientIdAndStatusInAndArchivedFalse(id, unpaidStatuses);
 
         if (unpaid > 0) {
-            throw new ClientHasActiveInvoicesException(unpaid);   // ← still handled by advice
+            throw new ClientHasActiveInvoicesException(unpaid);
         }
 
-        /* Physically delete every remaining invoice row (PAID, DRAFT, ARCHIVED) */
+        // Physically delete every remaining invoice row (PAID, DRAFT, ARCHIVED)
         invoiceRepository.deleteAllByClientId(id);
 
         repo.delete(client);
@@ -100,7 +109,7 @@ public class ClientService {
 
 
 
-
+    //paged client list
     @Transactional(readOnly = true)
     public Page<ClientResponse> list(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
@@ -110,7 +119,7 @@ public class ClientService {
                 .map(ClientMapper::toDto);
     }
 
-    /* ───────── Simple list for dropdowns, etc. ───────── */
+    //full client list
     @Transactional(readOnly = true)
     public List<ClientResponse> findAll() {
         User user = userProvider.getCurrentUser();

@@ -12,6 +12,7 @@ public class DbUserDetailsService implements UserDetailsService {
 
     private final UserRepository repo;
 
+    //used once during login to find user in db
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return repo.findByEmail(email)

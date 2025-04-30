@@ -1,4 +1,4 @@
-package com.invoiceapp.controller;
+package com.invoiceapp.controller.mvccontroller;
 
 import com.invoiceapp.entity.Invoice;
 import com.invoiceapp.repository.InvoiceRepository;
@@ -38,7 +38,6 @@ public class PaymentConfirmationController {
 
         inv.setPaymentIntentAt(LocalDateTime.now());
 
-        // optional: notify owner
         emailService.simpleNotify(
                 "owner@invoiceapp.local",
                 "Client clicked payment link",

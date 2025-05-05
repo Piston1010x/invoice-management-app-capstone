@@ -1,6 +1,7 @@
 
 package com.invoiceapp;
 
+
 import com.invoiceapp.config.SchedulerConfig;
 import com.invoiceapp.entity.*;
 import com.invoiceapp.repository.InvoiceMetricRepository;
@@ -9,7 +10,9 @@ import com.invoiceapp.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -26,9 +29,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class SchedulerConfigTest {
 
-    @Mock private InvoiceRepository invoiceRepo;
-    @Mock private InvoiceMetricRepository metricRepo;
-    @Mock private EmailService emailService;
+    @Mock
+    private InvoiceRepository invoiceRepo;
+    @Mock
+    private InvoiceMetricRepository metricRepo;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private SchedulerConfig schedulerConfig;

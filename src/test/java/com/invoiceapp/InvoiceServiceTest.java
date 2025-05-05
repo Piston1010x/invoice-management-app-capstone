@@ -1,5 +1,3 @@
-
-
 package com.invoiceapp; // Ensure correct package
 
 import com.invoiceapp.dto.invoice.InvoiceItemRequest;
@@ -198,7 +196,7 @@ class InvoiceServiceTest {
     void send_DraftInvoice_ShouldUpdateStatusSendEmailAndSnapshot() {
         String generatedNumber = "INV-NEW-123";
         byte[] pdfBytes = {1, 2, 3};
-        when(numberGenerator.next()).thenReturn(generatedNumber);
+        when(numberGenerator.nextForUser(fakeUser)).thenReturn(generatedNumber);
         when(pdfService.generate(draftInvoice)).thenReturn(pdfBytes); // Use the actual draftInvoice instance
 
         InvoiceResponse response = service.send(10L);
@@ -217,7 +215,7 @@ class InvoiceServiceTest {
         // Verify interactions
         verify(invoiceRepo).findById(10L); // Ensure it was fetched
         // verify(invoiceRepo).save(draftInvoice); // Verify save if needed
-        verify(numberGenerator).next();
+        verify(numberGenerator).nextForUser(fakeUser);
         verify(pdfService).generate(draftInvoice);
         verify(emailService).sendInvoice(
                 eq(fakeClient.getEmail()),

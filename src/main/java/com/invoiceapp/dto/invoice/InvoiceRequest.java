@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 //invoice dto
-
 public record InvoiceRequest(
         Long clientId,
         @NotNull List<@Valid InvoiceItemRequest> items,

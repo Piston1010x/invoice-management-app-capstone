@@ -20,10 +20,18 @@
         <div th:if="${formError}" class="alert alert-danger mb-3" th:text="${formError}"></div>
 
         <form method="post"
-              th:action="@{/admin/clients}"
               th:object="${form}"
+              th:action="${form.id} == null
+                          ? @{/admin/clients/new}
+                          : @{/admin/clients/{id}/edit(id=${form.id})}"
               novalidate>
-            <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{id}" />
+
+            <!-- CSRF token -->
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
 
             <!-- Name -->
             <div class="mb-3">
@@ -58,13 +66,26 @@
             <div class="mb-3">
                 <label class="form-label">Phone Number</label>
                 <input th:field="*{rawPhone}" type="tel" class="form-control"
-                       placeholder="555123456" required>
+                       placeholder="555123456" required
+                       oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 <div class="invalid-feedback" th:if="${#fields.hasErrors('rawPhone')}"
                      th:errors="*{rawPhone}">Phone must be 7–15 digits.</div>
             </div>
 
+
+
             <div class="d-grid">
-                <button type="submit" class="btn btn-success">Save Client</button>
+                <button type="submit" class="btn btn-success"
+                        th:text="${form.id} == null ? 'Create Client' : 'Update Client'">
+                    Save
+                </button>
+            </div>
+
+            <!-- Cancel button -->
+            <div class="d-grid mt-2">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/admin/clients'">
+                    Cancel
+                </button>
             </div>
         </form>
     </div>

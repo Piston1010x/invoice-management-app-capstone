@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.util.Collection;
 
+//user entity
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,7 +27,8 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private Role role = Role.USER;
 
 

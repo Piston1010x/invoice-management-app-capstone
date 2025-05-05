@@ -1,4 +1,3 @@
-// src/main/java/com/invoiceapp/security/AppUserDetails.java
 package com.invoiceapp.security;
 
 import com.invoiceapp.entity.User;
@@ -16,24 +15,30 @@ public record AppUserDetails(User user) implements UserDetails {
     @Override public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
     }
-    @Override public String getPassword() {
+    @Override
+    public String getPassword() {
         return user.getPasswordHash();
     }
 
-    @Override public String getUsername() {
+    @Override
+    public String getUsername() {
         return user.getEmail();
     }
 
-    @Override public boolean isAccountNonExpired()  {
+    @Override
+    public boolean isAccountNonExpired()  {
         return true;
     }
-    @Override public boolean isAccountNonLocked()   {
+    @Override
+    public boolean isAccountNonLocked()   {
         return true;
     }
-    @Override public boolean isCredentialsNonExpired() {
+    @Override
+    public boolean isCredentialsNonExpired() {
         return true;
     }
-    @Override public boolean isEnabled() {
+    @Override
+    public boolean isEnabled() {
         return user.isEnabled();
     }
 }

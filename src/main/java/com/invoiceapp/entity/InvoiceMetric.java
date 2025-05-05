@@ -8,9 +8,12 @@ import java.time.LocalDate;
 
 @Entity
 @Getter
+
+//invoice metric for dashboard stats
 public class InvoiceMetric {
 
-    @Id @GeneratedValue private Long id;
+    @Id @GeneratedValue
+    private Long id;
 
     private LocalDate snapshotDate;
 
@@ -19,7 +22,6 @@ public class InvoiceMetric {
 
     private BigDecimal amount;
 
-    /* JPA needs a no-arg ctor */
     protected InvoiceMetric() {}
 
     public InvoiceMetric(LocalDate when, InvoiceStatus st, BigDecimal amt) {

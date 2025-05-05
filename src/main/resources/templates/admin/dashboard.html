@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,20 +16,59 @@
     .badge-OVERDUE { background: #dc3545; color: #fff; }
   </style>
 </head>
-<body class="p-4">
+<body>
 
 <!-- Navbar -->
 <div th:replace="fragments/navbar :: body"></div>
+
+<div class="container p-4">
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+  <div th:if="${session.error}"
+       class="toast align-items-center text-bg-danger border-0 show"
+       role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" th:text="${session.error}">
+        You don’t have permission to perform that action.
+      </div>
+      <button type="button"
+              class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"
+              aria-label="Close"
+              onclick="this.closest('.toast').remove()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin-only “View As” -->
+<div sec:authorize="hasRole('ADMIN')" class="mb-4">
+  <form method="get" th:action="@{/admin/dashboard}" class="d-inline-flex align-items-center">
+    <label class="me-2 mb-0">Viewing as:</label>
+    <select name="userId" class="form-select form-select-sm me-2"
+            onchange="this.form.submit()">
+      <option th:each="u : ${users}"
+              th:value="${u.id}"
+              th:text="${u.email}"
+              th:selected="${u.id} == ${selectedUserId}">
+      </option>
+    </select>
+    <!-- preserve date filters -->
+    <input type="hidden" name="from" th:value="${from}" />
+    <input type="hidden" name="to"   th:value="${to}" />
+  </form>
+</div>
 
 <h1 class="mb-4">Dashboard</h1>
 
 <!-- Date Filter -->
 <form class="row g-2 mb-5" method="get" th:action="@{/admin/dashboard}">
+  <input type="hidden" name="userId" th:value="${selectedUserId}" th:if="${selectedUserId != null}"/>
   <div class="col-auto">
     <input type="date" name="from" class="form-control" th:value="${from}" />
   </div>
   <div class="col-auto">
-    <input type="date" name="to" class="form-control" th:value="${to}" />
+    <input type="date" name="to"   class="form-control" th:value="${to}" />
   </div>
   <div class="col-auto">
     <button class="btn btn-outline-primary">Apply</button>
@@ -74,7 +115,7 @@
   </div>
 </div>
 
-<!-- Overall Revenue & Outstanding -->
+<!-- Revenue & Outstanding -->
 <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
   <div class="col">
     <div class="card h-100 shadow-sm text-center">
@@ -124,7 +165,7 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h6 class="card-title text-center">Revenue vs Outstanding</h6>
-        <div class="height:400px;">
+        <div class="ratio ratio-4x3">
           <canvas id="financeChart"></canvas>
         </div>
       </div>
@@ -142,11 +183,11 @@
     <tbody>
     <tr th:each="inv : ${recentInvoices}">
       <td th:text="${inv.invoiceNumber}">INV-0001</td>
-      <td th:text="${inv.clientName}">Acme</td>
+      <td th:text="${inv.clientName}">EPAM</td>
       <td>
-          <span class="badge"
-                th:classappend="'badge-'+${inv.status}"
-                th:text="${inv.status}">DRAFT</span>
+        <span class="badge"
+              th:classappend="'badge-'+${inv.status}"
+              th:text="${inv.status}">DRAFT</span>
       </td>
       <td class="text-end" th:text="${inv.total}">0.00</td>
     </tr>
@@ -155,6 +196,7 @@
     </tr>
     </tbody>
   </table>
+</div>
 </div>
 
 <!-- Scripts -->
@@ -170,19 +212,13 @@
   Object.keys(revByCur).forEach(c => sel.add(new Option(c, c)));
 
   const statusData = [
-    /*[[${stats.draft}]]*/,
-    /*[[${stats.sent}]]*/,
-    /*[[${stats.overdue}]]*/,
-    /*[[${stats.paid}]]*/
+    /*[[${stats.draft}]]*/, /*[[${stats.sent}]]*/, /*[[${stats.overdue}]]*/, /*[[${stats.paid}]]*/
   ];
   new Chart(document.getElementById('statusChart'), {
     type: 'doughnut',
     data: {
       labels: ['Draft','Sent','Overdue','Paid'],
-      datasets: [{
-        data: statusData,
-        backgroundColor: ['#6c757d','#0d6efd','#dc3545','#198754']
-      }]
+      datasets: [{ data: statusData, backgroundColor: ['#6c757d','#0d6efd','#dc3545','#198754'] }]
     },
     options: {
       plugins: {
@@ -204,49 +240,63 @@
     type: 'bar',
     data: {
       labels: ['Revenue','Outstanding'],
-      datasets: [{
-        label: 'Amount',
-        data: [0,0],
-        backgroundColor: ['#198754','#dc3545']
-      }]
+      datasets:[{ label: 'Amount', data: [0,0], backgroundColor: ['#198754','#dc3545'] }]
     },
     options: {
       plugins: {
         datalabels: {
           anchor:'center', align:'center',
-          color: '#fff',
-          formatter: v => '$' + v.toFixed(2),
-          font:{ weight:'bold' }
+          color:'#fff', formatter:v=>'$'+v.toFixed(2), font:{weight:'bold'}
         },
         legend:{ display:false },
-        tooltip:{ callbacks:{ label: ctx => '$' + ctx.parsed.y.toFixed(2) } }
+        tooltip:{ callbacks:{ label:ctx=>'$'+ctx.parsed.y.toFixed(2) } }
       },
-      scales: {
-        y:{ beginAtZero:true, ticks:{ callback: v => '$' + v } }
-      }
+      scales: { y:{ beginAtZero:true, ticks:{ callback:v=>'$'+v } } }
     },
-    plugins: [ ChartDataLabels ]
+    plugins:[ ChartDataLabels ]
   });
 
   function updateBar(){
-    const cur = sel.value;
-    const revenue = revByCur[cur] || 0;
-    const outstanding = outByCur[cur] || 0;
+    const cur = sel.value;                           // e.g. "USD" or "GEL"
+    const revenue    = revByCur[cur]    || 0;
+    const outstanding= outByCur[cur]    || 0;
 
+
+    const locale = cur === 'GEL' ? 'ka-GE' : navigator.language;
+    const fmt = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: cur,
+      currencyDisplay: 'symbol'
+    });
+
+    //––– 1. update the bar heights
     fchart.data.datasets[0].data = [revenue, outstanding];
+
+    //––– 2. swap out all the old “$” callbacks for our new formatter
+    fchart.options.scales.y.ticks.callback = value => fmt.format(value);
+    fchart.options.plugins.datalabels.formatter = value => fmt.format(value);
+    fchart.options.plugins.tooltip.callbacks.label = ctx => fmt.format(ctx.parsed.y);
+
+    //––– 3. redraw
     fchart.update();
 
-    document.getElementById('revenueAmount').innerText = cur + ' ' + revenue.toFixed(2);
-    document.getElementById('outstandingAmount').innerText = cur + ' ' + outstanding.toFixed(2);
+    //––– 4. update the KPI cards below
+    document.getElementById('revenueAmount').innerText     = fmt.format(revenue);
+    document.getElementById('outstandingAmount').innerText = fmt.format(outstanding);
   }
 
+
+  /*]]>*/
+
+  // when the dropdown changes…
   sel.addEventListener('change', updateBar);
-  if(sel.options.length > 0){
+
+  // …and fire it once on page load so the default currency gets formatted correctly
+  if (sel.options.length > 0) {
     sel.selectedIndex = 0;
     updateBar();
   }
-  /*]]>*/
-</script>
 
+</script>
 </body>
 </html>

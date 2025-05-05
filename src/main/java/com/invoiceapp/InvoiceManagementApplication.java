@@ -9,5 +9,4 @@ public class InvoiceManagementApplication {
     public static void main(String[] args) {
         SpringApplication.run(InvoiceManagementApplication.class, args);
     }
-
 }

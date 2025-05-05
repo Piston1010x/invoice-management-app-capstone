@@ -1,18 +1,26 @@
 package com.invoiceapp.dto.invoice;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import java.math.BigDecimal;
 
+
 //invoice item form: desc, qty, price
 
+@Data
+@NoArgsConstructor
 public class InvoiceItemForm {
     private String description;
+    @Min(value = 1)
     private Integer quantity;
-    @DecimalMin(value="0.01", inclusive=false)
+    @DecimalMin(value = "0.01", inclusive = true, message = "Unit price must be positive")
     private BigDecimal unitPrice;
-
-    public InvoiceItemForm() {}
 
     public InvoiceItemForm(String description, Integer quantity, BigDecimal unitPrice) {
         this.description = description;

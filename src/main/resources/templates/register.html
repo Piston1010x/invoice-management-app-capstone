@@ -10,23 +10,28 @@
 <div class="card p-4 shadow" style="min-width:350px">
     <h3 class="mb-3 text-center">Create account</h3>
 
+    <!-- Success message -->
+    <div th:if="${success}" class="alert alert-success">
+        <p th:text="${success}"></p>
+    </div>
+
     <form th:action="@{/register}" th:object="${form}" method="post">
         <div class="mb-3">
             <label class="form-label">Email</label>
-            <input th:field="*{email}" type="email" class="form-control">
-            <div class="text-danger small" th:errors="*{email}"></div>
+            <input th:field="*{email}" type="email" class="form-control" placeholder="example@company.com">
+            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
         </div>
 
         <div class="mb-3">
             <label class="form-label">Password</label>
-            <input th:field="*{password}" type="password" class="form-control">
-            <div class="text-danger small" th:errors="*{password}"></div>
+            <input th:field="*{password}" type="password" class="form-control" placeholder="Enter your password">
+            <div class="text-danger small" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
         </div>
 
         <div class="mb-3">
             <label class="form-label">Confirm password</label>
-            <input th:field="*{passwordConfirm}" type="password" class="form-control">
-            <div class="text-danger small" th:errors="*{passwordConfirm}"></div>
+            <input th:field="*{passwordConfirm}" type="password" class="form-control" placeholder="Confirm your password">
+            <div class="text-danger small" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}"></div>
         </div>
 
         <button class="btn btn-success w-100">Register</button>

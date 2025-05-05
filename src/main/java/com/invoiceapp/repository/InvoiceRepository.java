@@ -17,57 +17,25 @@ import java.util.List;
 import java.util.Optional;
 //repo class for invoice entity
 public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
-    List<Invoice> findByStatus(InvoiceStatus status);
+
+    //Finds an invoice by its payment token
     Optional<Invoice> findByPaymentToken(String token);
+
+    //Counts the total number of invoices.
     long count();
-    long countByStatus(InvoiceStatus status);
 
-    @Query("select coalesce(sum(i.total),0) from Invoice i where i.status = :status")
-    BigDecimal sumByStatus(@Param("status") InvoiceStatus status);
-
-    @Query("select coalesce(sum(i.total),0) from Invoice i")
-    BigDecimal grandTotal();
-
-    @Query("""
-           select coalesce(sum(it.unitPrice * it.quantity), 0)
-           from InvoiceItem it
-           where it.invoice.status = :status
-           """)
-    BigDecimal sumAmountByStatus(@Param("status") InvoiceStatus status);
-
-    @Query("""
-           select coalesce(sum(it.unitPrice * it.quantity), 0)
-           from InvoiceItem it
-           """)
-    BigDecimal grandAmount();
-
-    // InvoiceRepository.java
+    //Retrieves all active invoices
     @Query("select i from Invoice i where i.archived = false and i.status = :status")
     List<Invoice> findActive(@Param("status") InvoiceStatus status);
 
-    @Query("select i from Invoice i where i.archived = false")
-    List<Invoice> findAllActive();
-
-
-    // InvoiceRepository
-    Page<Invoice> findByStatusAndArchivedFalse(InvoiceStatus status, Pageable p);
-    Page<Invoice> findByArchivedFalse(Pageable p);
-    List<Invoice> findByStatusAndUserAndArchivedFalse(InvoiceStatus status, User user);
+    //Retrieves a paginated list of non-archived invoices for a user filtered by status.
     Page<Invoice> findByStatusAndUserAndArchivedFalse(InvoiceStatus status, User user, Pageable pageable);
+
+    //Retrieves a paginated list of non-archived invoices for a specific user.
     Page<Invoice> findByUserAndArchivedFalse(User user, Pageable pageable);
-    List<Invoice> findByUser(User user);
-    long countByStatusAndUser(InvoiceStatus status, User user);
-    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE i.status = :status AND i.user = :user AND i.archived = false")
-    BigDecimal sumTotalByStatusAndUser(@Param("status") InvoiceStatus status, @Param("user") User user);
-    long countByUser(User user);
-    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE i.user = :user AND i.archived = false")
-    BigDecimal grandTotalByUser(@Param("user") User user);
-    long countByStatusAndUserAndArchivedFalse(InvoiceStatus status, User user);
-
-    @Query("SELECT COALESCE(SUM(i.total), 0) FROM Invoice i WHERE i.status = :status AND i.user = :user AND i.archived = false")
-    BigDecimal sumTotalByStatusAndUserAndArchivedFalse(@Param("status") InvoiceStatus status, @Param("user") User user);
 
 
+    //Finds all overdue invoices (status OVERDUE) that are due on or before the given date and not
     @Query("""
        select i 
          from Invoice i 
@@ -78,12 +46,21 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
     List<Invoice> findSentAndDueOnOrBefore(
             @Param("status") InvoiceStatus status,
             @Param("today") LocalDate today);
+
+
+
+    //Finds a paginated list of invoices based on user email.
     Page<Invoice> findByUserEmail(String username, Pageable pageable);
-    // New: same, but constrained to issueDate between from→to
+
+
+    //Counts invoices by status for a user within a specified issue date range
     long countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
             InvoiceStatus status, User user, LocalDate from, LocalDate to
     );
 
+
+
+    //Sums total amounts of invoices by status for a user within a specified issue date range (non-archived).
     @Query("""
       select coalesce(sum(i.total),0) 
       from Invoice i 
@@ -99,15 +76,18 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
             @Param("to")     LocalDate to
     );
 
-    long countByClientIdAndStatusNot(Long clientId, InvoiceStatus status);
-
+    //Counts non-archived invoices for a client by a set of statuses
     long countByClientIdAndStatusInAndArchivedFalse(
             Long clientId,
             Collection<InvoiceStatus> statuses);
-    long countByClientId(Long clientId);
-    void deleteAllByClientId(Long clientId);
-    List<Invoice> findByStatusAndUserAndArchivedFalseAndIssueDateBetween(InvoiceStatus invoiceStatus, User user, LocalDate from, LocalDate to);
 
+    //Deletes all invoices associated with a given client.
+    void deleteAllByClientId(Long clientId);
+
+
+
+
+    //Sums total amounts of invoices by status and currency for a user within a specified issue date range (non-archived).
     @Query("""
       select sum(i.total)
       from Invoice i
@@ -124,6 +104,14 @@ public interface InvoiceRepository  extends JpaRepository<Invoice, Long> {
             @Param("from")     LocalDate   from,
             @Param("to")       LocalDate   to);
 
+
+    // returns e.g. "INV-00042" or empty if none yet
+    // Finds the highest invoice number for a user or creates the first one if empty.
+    @Query("""
+       select max(i.invoiceNumber)
+       from Invoice i
+       where i.user = :user""")
+    Optional<String> findMaxInvoiceNumberForUser(@Param("user") User user);
 
 }
 

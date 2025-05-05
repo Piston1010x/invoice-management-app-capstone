@@ -6,7 +6,6 @@ import lombok.Data;
 import java.time.LocalDate;
 
 //mark paid form
-
 @Data
 public class RecordPaymentForm {
     @NotNull

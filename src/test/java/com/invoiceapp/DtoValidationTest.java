@@ -34,7 +34,7 @@ public class DtoValidationTest {
         validator = factory.getValidator();
     }
 
-    // Helper to get violation messages for a specific property
+    //Helper to get violation messages for a specific property
     private Set<String> getMessagesForProperty(Set<? extends ConstraintViolation<?>> violations, String propertyName) {
         return violations.stream()
                 .filter(v -> v.getPropertyPath().toString().equals(propertyName))
@@ -42,7 +42,7 @@ public class DtoValidationTest {
                 .collect(Collectors.toSet());
     }
 
-    // Helper to check if a specific property has *any* violation
+    //Helper to check if a specific property has *any* violation
     private boolean hasViolationForProperty(Set<? extends ConstraintViolation<?>> violations, String propertyName) {
         return violations.stream()
                 .anyMatch(v -> v.getPropertyPath().toString().equals(propertyName));
@@ -134,14 +134,29 @@ public class DtoValidationTest {
         // Test nested validation
         @Test
         void invalidItemInList_ShouldFail() {
-            InvoiceItemRequest invalidItem = new InvoiceItemRequest(" ", -1, BigDecimal.ZERO); // Blank desc, non-positive qty/price
-            InvoiceRequest req = new InvoiceRequest(1L, List.of(invalidItem), LocalDate.now(), Currency.USD, "T", "F", "B", "I");
+            InvoiceItemRequest invalidItem = new InvoiceItemRequest(" ", -1, BigDecimal.ZERO);
+            InvoiceRequest req = new InvoiceRequest(
+                    1L,
+                    List.of(invalidItem),
+                    LocalDate.now(),
+                    Currency.USD,
+                    "T", "F", "B", "I"
+            );
+
             Set<ConstraintViolation<InvoiceRequest>> violations = validator.validate(req);
-            // Expect multiple violations on the nested item
-            assertThat(violations).hasSize(3);
-            assertThat(violations.stream().map(v -> v.getPropertyPath().toString()))
-                    .containsExactlyInAnyOrder("items[0].description", "items[0].quantity", "items[0].unitPrice");
+
+            // Expect 4 violations: description, quantity, and two on unitPrice
+            assertThat(violations).hasSize(4);
+            assertThat(violations.stream()
+                    .map(v -> v.getPropertyPath().toString()))
+                    .containsExactlyInAnyOrder(
+                            "items[0].description",
+                            "items[0].quantity",
+                            "items[0].unitPrice",   // @DecimalMin
+                            "items[0].unitPrice"    // @Positive
+                    );
         }
+
     }
 
     @Nested
@@ -189,5 +204,4 @@ public class DtoValidationTest {
         }
     }
 
-    // Add tests for RecordPaymentForm, InvoiceItemRequest etc.
 }

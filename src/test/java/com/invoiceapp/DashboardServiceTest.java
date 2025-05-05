@@ -1,80 +1,142 @@
 package com.invoiceapp;
 
 import com.invoiceapp.dto.misc.DashboardStats;
-import com.invoiceapp.entity.InvoiceStatus;
+import com.invoiceapp.entity.Currency;
 import com.invoiceapp.entity.User;
 import com.invoiceapp.repository.InvoiceRepository;
 import com.invoiceapp.service.DashboardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.invoiceapp.entity.InvoiceStatus.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
 
-    private static final BigDecimal PAID_TOTAL    = new BigDecimal("100.50");
-    private static final BigDecimal SENT_TOTAL    = new BigDecimal("75.25");
-    private static final BigDecimal OVERDUE_TOTAL = new BigDecimal("24.75");
-
-    private static final LocalDate FROM = LocalDate.of(2024, 1, 1);
-    private static final LocalDate TO   = LocalDate.of(2024, 12, 31);
-
-    @Mock
     private InvoiceRepository repo;
-
-    @InjectMocks
     private DashboardService service;
-
-    private User fakeUser;
+    private User user;
+    private LocalDate from;
+    private LocalDate to;
 
     @BeforeEach
     void setUp() {
-        fakeUser = new User();
-        fakeUser.setId(123L);
+        repo = mock(InvoiceRepository.class);
+        service = new DashboardService(repo);
+        user = new User();
+        user.setId(1L);
+        user.setEmail("user@example.com");
+        from = LocalDate.of(2025, 1, 1);
+        to   = LocalDate.of(2025, 1, 31);
     }
 
     @Test
-    void getStatsFor_returnsCorrectCountsAndSums() {
+    void getStatsFor_mixedValues() {
+        // --- counts ---
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(DRAFT,   user, from, to)).thenReturn(1L);
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(SENT,    user, from, to)).thenReturn(2L);
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(OVERDUE, user, from, to)).thenReturn(3L);
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(PAID,    user, from, to)).thenReturn(4L);
 
-        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.DRAFT), eq(fakeUser), any(), any())).thenReturn(2L);
-        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.SENT), eq(fakeUser), any(), any())).thenReturn(3L);
-        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(), any())).thenReturn(4L);
-        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.PAID), eq(fakeUser), any(), any())).thenReturn(5L);
+        // --- overall sums ---
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(PAID,    user, from, to)).thenReturn(BigDecimal.valueOf(100));
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(SENT,    user, from, to)).thenReturn(BigDecimal.valueOf(50));
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(OVERDUE, user, from, to)).thenReturn(BigDecimal.valueOf(20));
 
-        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.PAID), eq(fakeUser), any(), any())).thenReturn(PAID_TOTAL);
-        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.SENT), eq(fakeUser), any(), any())).thenReturn(SENT_TOTAL);
-        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(
-                eq(InvoiceStatus.OVERDUE), eq(fakeUser), any(), any())).thenReturn(OVERDUE_TOTAL);
+        // --- per-currency sums ---
+        // USD
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(PAID,    user, Currency.USD, from, to))
+                .thenReturn(BigDecimal.valueOf(40));
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(SENT,    user, Currency.USD, from, to))
+                .thenReturn(BigDecimal.valueOf(10));
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(OVERDUE, user, Currency.USD, from, to))
+                .thenReturn(BigDecimal.valueOf(5));
+        // EUR (null revenue)
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(PAID,    user, Currency.EUR, from, to))
+                .thenReturn(null);
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(SENT,    user, Currency.EUR, from, to))
+                .thenReturn(BigDecimal.valueOf(2));
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(OVERDUE, user, Currency.EUR, from, to))
+                .thenReturn(null);
+        // GBP (all null)
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(eq(PAID),    eq(user), eq(Currency.GBP), any(), any()))
+                .thenReturn(null);
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(eq(SENT),    eq(user), eq(Currency.GBP), any(), any()))
+                .thenReturn(null);
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(eq(OVERDUE), eq(user), eq(Currency.GBP), any(), any()))
+                .thenReturn(null);
+        // GEL
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(PAID,    user, Currency.GEL, from, to))
+                .thenReturn(BigDecimal.valueOf(1));
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(SENT,    user, Currency.GEL, from, to))
+                .thenReturn(BigDecimal.valueOf(1));
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(OVERDUE, user, Currency.GEL, from, to))
+                .thenReturn(BigDecimal.valueOf(1));
 
-        DashboardStats stats = service.getStatsFor(fakeUser, FROM, TO);
+        DashboardStats stats = service.getStatsFor(user, from, to);
 
-        assertThat(stats.getDraft()).isEqualTo(2L);
-        assertThat(stats.getSent()).isEqualTo(3L);
-        assertThat(stats.getOverdue()).isEqualTo(4L);
-        assertThat(stats.getPaid()).isEqualTo(5L);
-        assertThat(stats.getTotalInvoices()).isEqualTo(14L);
+        // verify counts
+        assertEquals(1, stats.getDraft());
+        assertEquals(2, stats.getSent());
+        assertEquals(3, stats.getOverdue());
+        assertEquals(4, stats.getPaid());
+        assertEquals(1+2+3+4, stats.getTotalInvoices());
 
-        assertThat(stats.getRevenue()).isEqualByComparingTo(PAID_TOTAL);
-        assertThat(stats.getOutstanding()).isEqualByComparingTo(SENT_TOTAL.add(OVERDUE_TOTAL));
+        // verify overall sums
+        assertEquals(BigDecimal.valueOf(100), stats.getRevenue());
+        assertEquals(BigDecimal.valueOf(50 + 20), stats.getOutstanding());
 
-        verify(repo, times(4)).countByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
-        verify(repo, times(3)).sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), eq(fakeUser), any(), any());
+        // verify per-currency maps
+        Map<String, BigDecimal> revMap = stats.getRevenueByCurrency();
+        Map<String, BigDecimal> outMap = stats.getOutstandingByCurrency();
 
+        // USD
+        assertEquals(BigDecimal.valueOf(40), revMap.get("USD"));
+        assertEquals(BigDecimal.valueOf(10 + 5), outMap.get("USD"));
+        // EUR null→0
+        assertEquals(BigDecimal.ZERO, revMap.get("EUR"));
+        assertEquals(BigDecimal.valueOf(2), outMap.get("EUR"));
+        // GBP all null→0
+        assertEquals(BigDecimal.ZERO, revMap.get("GBP"));
+        assertEquals(BigDecimal.ZERO, outMap.get("GBP"));
+        // GEL
+        assertEquals(BigDecimal.valueOf(1), revMap.get("GEL"));
+        assertEquals(BigDecimal.valueOf(1 + 1), outMap.get("GEL"));
+    }
+
+    @Test
+    void getStatsFor_allNullSums_fallbacksToZero() {
+        // counts
+        when(repo.countByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), any(), any(), any()))
+                .thenReturn(0L);
+        // overall sums null
+        when(repo.sumTotalByStatusAndUserAndArchivedFalseAndIssueDateBetween(any(), any(), any(), any()))
+                .thenReturn(null);
+        // per-currency sums null
+        when(repo.sumTotalByStatusAndUserAndCurrencyAndArchivedFalseAndIssueDateBetween(any(), any(), any(), any(), any()))
+                .thenReturn(null);
+
+        DashboardStats stats = service.getStatsFor(user, from, to);
+
+        // everything should be zero
+        assertEquals(0, stats.getTotalInvoices());
+        assertEquals(0, stats.getDraft());
+        assertEquals(0, stats.getSent());
+        assertEquals(0, stats.getOverdue());
+        assertEquals(0, stats.getPaid());
+        assertEquals(BigDecimal.ZERO, stats.getRevenue());
+        assertEquals(BigDecimal.ZERO, stats.getOutstanding());
+
+        // maps contain all currencies with zero values
+        for (Currency c : Currency.values()) {
+            assertEquals(BigDecimal.ZERO, stats.getRevenueByCurrency().get(c.name()));
+            assertEquals(BigDecimal.ZERO, stats.getOutstandingByCurrency().get(c.name()));
+        }
     }
 }

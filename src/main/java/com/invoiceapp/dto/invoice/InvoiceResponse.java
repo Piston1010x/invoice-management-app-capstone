@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 //invoice response dto
-
 @Builder
 public record InvoiceResponse(
         Long id,
